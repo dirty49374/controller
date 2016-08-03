@@ -28,7 +28,6 @@
 #include "kll.h"
 
 
-
 // ----- Enums -----
 
 typedef enum ResultMacroEval {
@@ -52,19 +51,56 @@ extern ResultMacroRecord ResultMacroRecordList[];
 
 // Pending Result Macro Index List
 //  * Any result macro that needs processing from a previous macro processing loop
+
 index_uint_t macroResultMacroPendingList[ ResultMacroNum ] = { 0 };
 index_uint_t macroResultMacroPendingListSize = 0;
 
 
+// --- recording control start
+#define MAX_RECORD 			5
+#define MAX_RECORD_BUFFER_SZ 		300
+#define RECORD_BASE 			10000
+#define RECORDINGCONTROL_TOGGLE		0
+#define RECORDINGCONTROL_PLAY		1
+#define RECORDINGCONTROL_PRESS		2
+#define RECORDINGCONTROL_RELEASE	3
+
+uint16_t CurrentRecordingSlot;
+uint16_t CurrentRecordingLength;
+
+ResultMacro 	  RecodableMacroList[MAX_RECORD];
+ResultMacroRecord RecordableMacroRecordList[MAX_RECORD];
+uint8_t 	  RecordableGuideBuffer[MAX_RECORD][MAX_RECORD_BUFFER_SZ];
+
+uint8_t		  RecordingSendUsbKeyOutCapabilityIndex;
+uint8_t		  RecordingControlCapabilityIndex;
+uint8_t		  RecordingStopped;
+
+extern void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args );
+extern void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args );
+extern void Output_recordingSendUsbKey_capability( uint8_t state, uint8_t stateType, uint8_t *args );
+
+// -- recording control end
 
 // ----- Functions -----
 
 // Evaluate/Update ResultMacro
-inline ResultMacroEval Macro_evalResultMacro( var_uint_t resultMacroIndex )
+inline ResultMacroEval Macro_evalResultMacro( uint16_t resultMacroIndex )
 {
 	// Lookup ResultMacro
-	const ResultMacro *macro = &ResultMacroList[ resultMacroIndex ];
-	ResultMacroRecord *record = &ResultMacroRecordList[ resultMacroIndex ];
+	const ResultMacro* macro;
+	ResultMacroRecord* record;
+
+	if (resultMacroIndex < 10000)
+	{
+		macro  = &ResultMacroList[ resultMacroIndex ];
+		record = &ResultMacroRecordList[ resultMacroIndex ];
+	}
+	else
+	{
+		macro  = &RecodableMacroList[ resultMacroIndex - RECORD_BASE ];
+		record = &RecordableMacroRecordList[ resultMacroIndex - RECORD_BASE ];
+	}
 
 	// Current Macro position
 	var_uint_t pos = record->pos;
@@ -124,6 +160,28 @@ void Result_setup()
 		ResultMacroRecordList[ macro ].state     = 0;
 		ResultMacroRecordList[ macro ].stateType = 0;
 	}
+
+	// Initialize ResultMacro states
+	for ( var_uint_t macro = 0; macro < MAX_RECORD; macro++ )
+	{
+		RecordableGuideBuffer[ macro ][0] = '\0';
+		RecodableMacroList[ macro ].guide = &RecordableGuideBuffer[ macro ][0];
+
+		RecordableMacroRecordList[ macro ].pos       = 0;
+		RecordableMacroRecordList[ macro ].state     = 0;
+		RecordableMacroRecordList[ macro ].stateType = 0;
+	}
+
+	CurrentRecordingSlot = 0xFF;
+
+	for (int i=0; i<CapabilitiesNum; ++i)
+	{
+		if (CapabilitiesList[i].func == Output_recordingControl_capability)
+			RecordingControlCapabilityIndex = i;
+		else if (CapabilitiesList[i].func == Output_recordingSendUsbKey_capability)
+			RecordingSendUsbKeyOutCapabilityIndex = i;
+		
+	}
 }
 
 
@@ -154,3 +212,126 @@ void Result_process()
 	macroResultMacroPendingListSize = macroResultMacroPendingListTail;
 }
 
+
+void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+	// Display capability name
+	if ( stateType == 0xFF && state == 0xFF )
+	{
+		print("Output_recordControl_capability(cmd,slot)");
+		return;
+	}
+
+	uint8_t type = args[0];
+	uint8_t data = args[1];
+
+	switch (type)
+	{
+		case RECORDINGCONTROL_TOGGLE:
+			if (data >= MAX_RECORD)
+				return;
+
+			if (CurrentRecordingSlot == data)
+			{
+				// deactivate on press
+				if ( stateType != 0x00 || state != 0x01 )
+					return;
+
+				// stop 
+				print("recording stopped : ");
+				printHex(CurrentRecordingSlot);
+				print(NL);
+
+				CurrentRecordingSlot = 0xFF;
+
+				// prevent restart recording of current key release
+				RecordingStopped = 1;
+			}
+			else
+			{
+				// activate on release
+				if ( stateType != 0x00 || state != 0x03 )
+					return;
+
+				if (RecordingStopped)
+				{
+					RecordingStopped = 0;
+					return;
+				}
+
+				// start new
+				CurrentRecordingSlot = data;
+				CurrentRecordingLength = 0;
+				RecordableGuideBuffer[ CurrentRecordingSlot ][ 0 ] = '\0';
+
+				print("recording started : ");
+				printHex(CurrentRecordingSlot);
+				print(NL);
+			}
+			return;
+
+
+		case RECORDINGCONTROL_PLAY:
+			// activate on press
+			if ( stateType != 0x00 || state != 0x01 )
+				return;
+
+			// stop current recording if exists
+			if (CurrentRecordingSlot != 0xFF)
+			{
+				CurrentRecordingSlot = 0xFF;
+			}
+
+			// replay recording
+			macroResultMacroPendingList[ macroResultMacroPendingListSize++ ] = RECORD_BASE + data;
+			RecordableMacroRecordList[ data ].state = state;
+			RecordableMacroRecordList[ data ].stateType = stateType;
+			return;
+
+		case RECORDINGCONTROL_PRESS:
+			Output_usbCodeSend_capability(0x01, 0, &data);
+			return;
+
+		case RECORDINGCONTROL_RELEASE:
+			Output_usbCodeSend_capability(0x03, 0, &data);
+			return;
+	}
+}
+
+void Output_recordingSendUsbKey_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+	// Display capability name
+	if ( stateType == 0xFF && state == 0xFF )
+	{
+		print("Output_recordAndSendUsbKey_capability(usbCode)");
+		return;
+	}
+
+	uint8_t key = args[0];
+
+	if (CurrentRecordingSlot != 0xFF)
+	{
+		if ( stateType == 0x00 && state != 0x02 ) // press & releasestate
+		{
+			uint8_t* buffer = &RecordableGuideBuffer[ CurrentRecordingSlot ][ 0 ];
+			if (CurrentRecordingLength + 4 >= MAX_RECORD_BUFFER_SZ)
+			{
+				CurrentRecordingSlot = 0xFF;
+			}
+			else
+			{
+				uint8_t pressType = state == 0x01 ? RECORDINGCONTROL_PRESS : RECORDINGCONTROL_RELEASE;
+
+				buffer[ CurrentRecordingLength++ ] = 1;			// one combo
+				buffer[ CurrentRecordingLength++ ] = RecordingControlCapabilityIndex;
+				buffer[ CurrentRecordingLength++ ] = pressType;
+				buffer[ CurrentRecordingLength++ ] = key;
+				buffer[ CurrentRecordingLength ] = '\0';
+
+				// printHex(stateType); print(", "); printHex(state); print(", "); printHex(key);
+				// print("/   ");
+			}
+		}
+	}
+	Output_usbCodeSend_capability( state, stateType, &key );
+}
