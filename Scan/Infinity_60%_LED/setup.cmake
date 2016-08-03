@@ -21,6 +21,7 @@ AddModule ( Scan MatrixARM )
 
 set ( Module_SRCS
 	scan_loop.c
+	led_layer.c
 )
 
 

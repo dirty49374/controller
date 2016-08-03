@@ -6,6 +6,8 @@ KLL = 0.3c;
 # Modified Date
 Date = 2016-02-06;
 
+ledLayer => LED_layer_capability( cmd : 1, layer : 1, index : 1, value : 1 );
+ledPress => LED_press_capability( index : 1 );
 
 S0x00 : U"Esc";
 S0x01 : U"1";
@@ -83,6 +85,12 @@ action1 => CustomAction_action1_capability(); # No arguments
 blockHold => CustomAction_blockHold_capability( usbCode : 1 ); # Single 8-bit argument
 blockKey => CustomAction_blockKey_capability( usbCode : 1 );
 
+LedLayerModes => LedLayerModes_define;
+LedLayerModes = "
+	BLEND_OVERLAY | ACTIVE_ALWAYS,
+	BLEND_OVERWRITE,
+	BLEND_OVERWRITE | ACTIVE_ALWAYS
+";
 
 
 # Defines available to the MD1_1 Scan Module

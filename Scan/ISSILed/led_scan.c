@@ -380,6 +380,7 @@ void LED_readPage( uint8_t len, uint8_t page )
 }
 
 // Setup
+extern void led_layer_setup();
 inline void LED_setup()
 {
 	// Register Scan CLI dictionary
@@ -414,6 +415,8 @@ inline void LED_setup()
 		// Disable Software shutdown of ISSI chip
 		LED_writeReg( 0x0A, 0x01, 0x0B );
 	}
+
+	led_layer_setup();
 }
 
 
@@ -638,10 +641,25 @@ uint8_t I2C_Send( uint8_t *data, uint8_t sendLen, uint8_t recvLen )
 
 
 
+
+
 // LED State processing loop
+uint8_t* led_current_pagebuffer();
+int led_pagebuffer_size();
+uint8_t led_layer_update();
+
 unsigned int LED_currentEvent = 0;
 inline uint8_t LED_scan()
 {
+	uint8_t updated = led_layer_update();
+	if (updated != 0)
+	{
+		uint8_t* buffer = led_current_pagebuffer();
+		int size = led_pagebuffer_size();
+
+		if (buffer != 0x0 && size != 0x0)
+			LED_sendPage( buffer, size, 0 );
+	}
 	// Check for current change event
 	if ( LED_currentEvent )
 	{
