@@ -58,7 +58,7 @@ index_uint_t macroResultMacroPendingListSize = 0;
 
 // --- recording control start
 #define MAX_RECORD 			5
-#define MAX_RECORD_BUFFER_SZ 		300
+#define MAX_RECORD_BUFFER_SZ 		500
 #define RECORD_BASE 			10000
 #define RECORDINGCONTROL_TOGGLE		0
 #define RECORDINGCONTROL_PLAY		1
@@ -314,7 +314,7 @@ void Output_recordingSendUsbKey_capability( uint8_t state, uint8_t stateType, ui
 		if ( stateType == 0x00 && state != 0x02 ) // press & releasestate
 		{
 			uint8_t* buffer = &RecordableGuideBuffer[ CurrentRecordingSlot ][ 0 ];
-			if (CurrentRecordingLength + 4 >= MAX_RECORD_BUFFER_SZ)
+			if (CurrentRecordingLength + 5 >= MAX_RECORD_BUFFER_SZ)
 			{
 				CurrentRecordingSlot = 0xFF;
 			}

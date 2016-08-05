@@ -34,7 +34,48 @@
 #include <print.h>
 
 
+#include <Lib/delay.h>
+#define MAX_CNT 100
+uint32_t tick_times[MAX_CNT] = {};
+uint32_t tick_total;
+uint8_t tick_cur;
 
+uint32_t report_msec;
+void report(uint32_t tick_us)
+{
+	tick_total -= tick_times[tick_cur];
+	tick_total += tick_us;
+
+	tick_times[tick_cur++] = tick_us;
+
+	if (tick_cur == MAX_CNT)
+	{
+		tick_cur = 0;
+	}
+	uint32_t m = millis();
+	if (report_msec < m)
+	{
+		uint32_t min = -1, max = 0;
+		for (uint8_t i=0; i<MAX_CNT; ++i)
+		{
+			if (tick_times[i] < min)
+				min = tick_times[i];
+			if (tick_times[i] > max)
+				max = tick_times[i];
+		}
+		print("frame report: cnt=");
+		printInt32(MAX_CNT);
+		print(" min=");
+		printInt32(min);
+		print("us max=");
+		printInt32(max);
+		print("us avg=");
+		printInt32(tick_total / MAX_CNT); 
+		print(NL);
+
+		report_msec += 5000;
+	}
+}
 // ----- Functions -----
 
 int main()
@@ -56,6 +97,8 @@ int main()
 	// Main Detection Loop
 	while ( 1 )
 	{
+		uint32_t start = micros();
+
 		// Process CLI
 		CLI_process();
 
@@ -70,6 +113,8 @@ int main()
 
 		// Sends USB data only if changed
 		Output_send();
+
+		report(micros() - start);
 	}
 }
 

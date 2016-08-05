@@ -647,19 +647,33 @@ uint8_t I2C_Send( uint8_t *data, uint8_t sendLen, uint8_t recvLen )
 uint8_t* led_current_pagebuffer();
 int led_pagebuffer_size();
 uint8_t led_layer_update();
-
+uint8_t led_updated;
+uint16_t led_update_tick;
 unsigned int LED_currentEvent = 0;
 inline uint8_t LED_scan()
 {
-	uint8_t updated = led_layer_update();
-	if (updated != 0)
+	led_updated = led_updated || led_layer_update();
+	if (led_updated != 0)
 	{
-		uint8_t* buffer = led_current_pagebuffer();
-		int size = led_pagebuffer_size();
+		led_update_tick ++;
 
-		if (buffer != 0x0 && size != 0x0)
-			LED_sendPage( buffer, size, 0 );
+		if (led_update_tick >= 20)
+		{
+			uint8_t* buffer = led_current_pagebuffer();
+			int size = led_pagebuffer_size();
+
+			if (buffer != 0x0 && size != 0x0)
+			{
+				if ( size < ((I2C_Buffer*)&I2C_TxBuffer)->size )
+				{
+					LED_sendPage( buffer, size, 0 );
+					led_updated = 0;
+					led_update_tick = 0;
+				}
+			}
+		}
 	}
+
 	// Check for current change event
 	if ( LED_currentEvent )
 	{
