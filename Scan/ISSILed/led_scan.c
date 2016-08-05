@@ -652,12 +652,14 @@ uint16_t led_update_tick;
 unsigned int LED_currentEvent = 0;
 inline uint8_t LED_scan()
 {
-	led_updated = led_updated || led_layer_update();
+	uint8_t u = led_layer_update();
+	led_updated = led_updated || u;
+
 	if (led_updated != 0)
 	{
 		led_update_tick ++;
 
-		if (led_update_tick >= 20)
+		if (led_update_tick >= 100)
 		{
 			uint8_t* buffer = led_current_pagebuffer();
 			int size = led_pagebuffer_size();
@@ -666,7 +668,16 @@ inline uint8_t LED_scan()
 			{
 				if ( size < ((I2C_Buffer*)&I2C_TxBuffer)->size )
 				{
+//	uint32_t s = micros();
 					LED_sendPage( buffer, size, 0 );
+//	uint32_t e = micros();
+	//if (e-s>10)
+//	{
+//		print("LED IEC:");
+//		printInt32(e-s);
+//		print(" us"NL);
+//	}
+
 					led_updated = 0;
 					led_update_tick = 0;
 				}

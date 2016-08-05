@@ -13,9 +13,9 @@
 enum led_layer_mode_t
 {
 	BLEND_TRANSPARENT 	= 0x01,
-	BLEND_OVERWRITE = 0x02,
-	BLEND_MASK	= 0x0f,
-	ACTIVE_ALWAYS 	= 0x80,
+	BLEND_OVERWRITE 	= 0x02,
+	BLEND_MASK		= 0x0f,
+	ACTIVE_ALWAYS 		= 0x80,
 };
 
 uint8_t led_layer_pagebuffer[] = { 0xE8, 0x24,
@@ -435,9 +435,9 @@ void LED_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 		led_animation_t* ani = create_animation(2, index, 100);
 		if (ani != 0x0)
 		{
-			ani->data[0] = 100;			// spread interval
-			ani->data[1] = EASE_EXPONENTIAL_OUT;	// spreading curve
-			ani->data[2] = 100;			// pixel interval
+			ani->data[0] = 80;			// spread interval
+			ani->data[1] = EASE_QUINTIC_OUT;	// spreading curve
+			ani->data[2] = 200;			// pixel interval
 			ani->data[3] = EASE_SINUSOIDAL_OUT;	// pixel curve
 		}
 #endif
@@ -469,8 +469,8 @@ uint8_t update_tick = 0;
 
 uint8_t led_layer_update()
 {
-//	if ((update_tick++ % 20) != 0)
-//		return 0;
+	if ((update_tick++ % 5) != 0)
+		return 0;
 
 	uint8_t updated = animation_update();
 
