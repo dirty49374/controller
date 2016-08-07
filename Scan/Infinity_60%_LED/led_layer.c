@@ -1,4 +1,5 @@
-#include <Lib/ScanLib.h> #include <print.h>
+#include <Lib/ScanLib.h>
+#include <print.h>
 #include <kll_defs.h>
 
 #define MAX_LAYERS	3
@@ -270,11 +271,11 @@ void animate_1(led_animation_t* ani, uint16_t tick)
 	uint8_t v;
 	if (ani->data[0] == 0)
 	{
-		v = led_layer_ease(tick, ani->duration, ani->data[1]);
+		v = (uint16_t) led_layer_ease(tick, ani->duration, ani->data[1]) * ani->data[2] / 255;
 	}
 	else
 	{
-		v = led_layer_ease_r(tick, ani->duration, ani->data[1]);
+		v = (uint16_t) led_layer_ease_r(tick, ani->duration, ani->data[1]) * ani->data[2] / 255;
 	}
 	led_layer_set_max_pixel(1, ani->origin, v);
 }
@@ -301,21 +302,24 @@ void animate_2(led_animation_t* ani, uint16_t tick)
 			{
 				ani0->data[0] = 1;		// decreasing
 				ani0->data[1] = ani->data[3];
+				ani0->data[2] = 255;
 			}
 		}
 		else
 		{
-			led_animation_t * ani0 = create_animation(1, (ani->origin-last_spread) % MAX_PIXELS, ani->data[2]);
+			led_animation_t * ani0 = create_animation(1, (ani->origin-last_spread) % MAX_PIXELS, ani->data[2] - last_spread * 10);
 			if (ani0 != 0x0)
 			{
 				ani0->data[0] = 1;		// decreasing
 				ani0->data[1] = ani->data[3];
+				ani0->data[2] = 255 - last_spread * 20;
 			}
-			led_animation_t * ani1 = create_animation(1, (ani->origin+last_spread) % MAX_PIXELS, ani->data[2]);
+			led_animation_t * ani1 = create_animation(1, (ani->origin+last_spread) % MAX_PIXELS, ani->data[2] - last_spread * 10);
 			if (ani1 != 0x0)
 			{
 				ani1->data[0] = 1;		// decreasing
 				ani1->data[1] = ani->data[3];
+				ani1->data[2] = 255 - last_spread * 20;
 			}
 		}
 		last_spread ++;
@@ -334,16 +338,23 @@ ani_fun_t led_layer_ani_funcs[] = {
 	animate_2
 };
 
-uint8_t animation_update()
+uint8_t led_layer_update_animation()
 {
-	uint8_t updated = led_animation_count != 0;
-//	if (led_animation_count == 0)
-//	{
-//		led_layers_info[1].refcount = 0;
-//		return;
-//	}
+	if (led_animation_count == 0)
+	{
+		static uint16_t lt = 0;
+		if (lt == global_tick)
+		{
+			led_layers_info[1].refcount = 0;
+			return 1;
+		}
+		else if (lt < global_tick || global_tick + 500 < lt)
+		{
+			lt = global_tick + 500;
+		}
+		return 0;
+	}
 
-	
 	led_layers_info[1].refcount = 1;
 	led_layer_clear(1, 0);
 
@@ -381,9 +392,7 @@ uint8_t animation_update()
 		}
 	}
 
-	global_tick ++;
-
-	return updated;
+	return 1;
 }
 
 uint8_t* led_current_pagebuffer()
@@ -432,12 +441,12 @@ void LED_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 			ani->data[1] = EASE_SINUSOIDAL_OUT;	// pixel curve
 		}
 #else
-		led_animation_t* ani = create_animation(2, index, 100);
+		led_animation_t* ani = create_animation(2, index, 50);
 		if (ani != 0x0)
 		{
-			ani->data[0] = 80;			// spread interval
+			ani->data[0] = 70;			// spread interval
 			ani->data[1] = EASE_QUINTIC_OUT;	// spreading curve
-			ani->data[2] = 200;			// pixel interval
+			ani->data[2] = 50;			// pixel interval
 			ani->data[3] = EASE_SINUSOIDAL_OUT;	// pixel curve
 		}
 #endif
@@ -456,7 +465,7 @@ void led_layer_setup()
 	led_layers_info[1].refcount   = 0;
 	led_layers_info[1].activated  = 0;
 
-	led_layers_info[2].blend_mode = BLEND_TRANSPARENT;
+	led_layers_info[2].blend_mode = BLEND_OVERWRITE;
 	led_layers_info[2].always_on  = 1;
 	led_layers_info[2].refcount   = 0;
 	led_layers_info[2].activated  = 0;
@@ -465,14 +474,22 @@ void led_layer_setup()
 }
 
 
-uint8_t update_tick = 0;
-
-uint8_t led_layer_update()
+uint8_t led_layer_elapsed_next_update_time()
 {
-	if ((update_tick++ % 5) != 0)
-		return 0;
+	static uint32_t last_update_10ms = 0;
 
-	uint8_t updated = animation_update();
+	uint32_t now10 = millis() / 10;
+	if (last_update_10ms != now10)
+	{
+		last_update_10ms = now10;
+		return 1;
+	}
+	return 0;
+}
+
+uint8_t led_layer_update_pixels()
+{
+	uint8_t updated = 0;
 
 	for (uint8_t lidx = 1; lidx < MAX_LAYERS; ++lidx)
 	{
@@ -523,6 +540,19 @@ uint8_t led_layer_update()
 	}
 
 	return updated;
+}
+
+uint8_t led_layer_update()
+{
+	if (!led_layer_elapsed_next_update_time())
+		return 0;
+
+	uint8_t u1 = led_layer_update_animation();
+	uint8_t u2 = led_layer_update_pixels();
+
+	global_tick ++;
+
+	return u1 || u2;
 }
 
 

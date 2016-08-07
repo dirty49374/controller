@@ -6,6 +6,7 @@ KLL = 0.3c;
 # Modified Date
 Date = 2016-02-06;
 
+recordingControl => Output_recordingControl_capability( cmd : 1, slot : 1 );
 ledLayer => LED_layer_capability( cmd : 1, layer : 1, index : 1, value : 1 );
 ledPress => LED_press_capability( index : 1 );
 
