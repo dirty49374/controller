@@ -1,3 +1,10 @@
+Dirty49374's fork of Kiibohd Controller
+=======================================
+
+* added macro recording feature
+* added led animation, videos available on [youtube](https://www.youtube.com/watch?v=oWXFSwU79Tk)
+* corresponding kll files are [here](https://github.com/dirty49374/kiibohd-dev-vagrant)
+
 The Kiibohd Controller
 ======================
 
