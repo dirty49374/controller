@@ -380,7 +380,7 @@ void LED_readPage( uint8_t len, uint8_t page )
 }
 
 // Setup
-extern void led_layer_setup();
+extern void LA_setup();
 inline void LED_setup()
 {
 	// Register Scan CLI dictionary
@@ -416,7 +416,7 @@ inline void LED_setup()
 		LED_writeReg( 0x0A, 0x01, 0x0B );
 	}
 
-	led_layer_setup();
+	LA_setup();
 }
 
 
@@ -643,47 +643,42 @@ uint8_t I2C_Send( uint8_t *data, uint8_t sendLen, uint8_t recvLen )
 
 
 
-// LED State processing loop
-uint8_t* led_current_pagebuffer();
-int led_pagebuffer_size();
-uint8_t led_layer_update();
-uint8_t led_updated;
-uint16_t led_update_tick;
-unsigned int LED_currentEvent = 0;
-inline uint8_t LED_scan()
-{
-	uint8_t u = led_layer_update();
-	led_updated = led_updated || u;
+uint8_t  LA_update();
+uint8_t* LA_get_pagebuffer();
+int 	 LA_get_pagebuffer_size();
 
+void LA_scan()
+{
+	static uint8_t led_updated;
+
+	// animation updates every 10 ms.
+	uint8_t u = LA_update();
+
+	// it's possible last animation update was not sent to I2C
+	led_updated = led_updated || u;
 	if (led_updated != 0)
 	{
-		led_update_tick ++;
+		uint8_t* buffer = LA_get_pagebuffer();
+		int size = LA_get_pagebuffer_size();
 
-		if (led_update_tick >= 100)
+		if (buffer != 0x0 && size != 0x0)
 		{
-			uint8_t* buffer = led_current_pagebuffer();
-			int size = led_pagebuffer_size();
-
-			if (buffer != 0x0 && size != 0x0)
+			if ( size < ((I2C_Buffer*)&I2C_TxBuffer)->size )
 			{
-				if ( size < ((I2C_Buffer*)&I2C_TxBuffer)->size )
-				{
-//	uint32_t s = micros();
-					LED_sendPage( buffer, size, 0 );
-//	uint32_t e = micros();
-	//if (e-s>10)
-//	{
-//		print("LED IEC:");
-//		printInt32(e-s);
-//		print(" us"NL);
-//	}
-
-					led_updated = 0;
-					led_update_tick = 0;
-				}
+				LED_sendPage( buffer, size, 0 );
+				led_updated = 0;
 			}
 		}
 	}
+}
+
+// LED State processing loop
+unsigned int LED_currentEvent = 0;
+inline uint8_t LED_scan()
+{
+
+	// update led animation
+	LA_scan();
 
 	// Check for current change event
 	if ( LED_currentEvent )

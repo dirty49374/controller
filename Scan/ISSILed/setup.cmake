@@ -18,6 +18,7 @@ set ( SubModule 1 )
 #
 set ( Module_SRCS
 	led_scan.c
+	led_anim.c
 )
 
 

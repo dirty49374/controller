@@ -73,3 +73,22 @@ ISSILedBrightness_example = "
 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, /* C9-1 -> C9-16 */
 ";
 
+# LED Animation
+#
+LAWidth => LAWidth_define;
+LAHeight => LAHeight_define;
+LAWidth = 16;
+LAHeight = 4;
+
+recordingControl => Output_recordingControl_capability( cmd : 1, slot : 1 );
+#ledLayer => LA_layer_capability( cmd : 1, layer : 1, index : 1, value : 1 );
+ledPress => LA_press_capability( index : 1 );
+
+LedLayerModes => LedLayerModes_define;
+LedLayerModes = "
+	BLEND_OVERLAY | ACTIVE_ALWAYS,
+	BLEND_OVERWRITE,
+	BLEND_OVERWRITE | ACTIVE_ALWAYS
+";
+
+

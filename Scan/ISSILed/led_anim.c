@@ -7,19 +7,13 @@
 #define MAX_ANIMATIONS	50
 #define PAGEBUFFER_SIZE	16*10
 
-#define LEDLAYER_COMMAND_CLEARLAYER	0x00
-#define LEDLAYER_COMMAND_SETPIXEL	0x01
-#define LEDLAYER_COMMAND_NONE		0x09
-
-enum led_layer_mode_t
+enum LA_layer_mode_t
 {
-	BLEND_TRANSPARENT 	= 0x01,
-	BLEND_OVERWRITE 	= 0x02,
-	BLEND_MASK		= 0x0f,
-	ACTIVE_ALWAYS 		= 0x80,
+	LA_BLEND_TRANSPARENT 	= 0x01,
+	LA_BLEND_OVERWRITE 	= 0x02
 };
 
-uint8_t led_layer_pagebuffer[] = { 0xE8, 0x24,
+uint8_t LA_pagebuffer[] = { 0xE8, 0x24,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* C1-1 -> C1-16 */
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* C2-1 -> C2-16 */
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* C3-1 -> C3-16 */
@@ -32,41 +26,41 @@ uint8_t led_layer_pagebuffer[] = { 0xE8, 0x24,
 };
 
 
-#define EASE_LINEAR              0
-#define EASE_QUADRATIC_IN        1
-#define EASE_QUADRATIC_OUT       2
-#define EASE_QUADRATIC_INOUT     3
-#define EASE_CUBIC_IN            4
-#define EASE_CUBIC_OUT           5
-#define EASE_CUBIC_INOUT         6
-#define EASE_QUARTIC_IN          7
-#define EASE_QUARTIC_OUT         8
-#define EASE_QUARTIC_INOUT       9
-#define EASE_QUINTIC_IN          10
-#define EASE_QUINTIC_OUT         11
-#define EASE_QUINTIC_INOUT       12
-#define EASE_SINUSOIDAL_IN       13
-#define EASE_SINUSOIDAL_OUT      14
-#define EASE_SINUSOIDAL_INOUT    15
-#define EASE_EXPONENTIAL_IN      16
-#define EASE_EXPONENTIAL_OUT     17
-#define EASE_EXPONENTIAL_INOUT   18
-#define EASE_CIRCULAR_IN         19
-#define EASE_CIRCULAR_OUT        20
-#define EASE_CIRCULAR_INOUT      21
-#define EASE_ELASTIC_IN          22
-#define EASE_ELASTIC_OUT         23
-#define EASE_ELASTIC_INOUT       24
-#define EASE_BACK_IN             25
-#define EASE_BACK_OUT            26
-#define EASE_BACK_INOUT          27
-#define EASE_BOUNCE_IN           28
-#define EASE_BOUNCE_OUT          29
-#define EASE_BOUNCE_INOUT        30
+#define LA_EASE_LINEAR              0
+#define LA_EASE_QUADRATIC_IN        1
+#define LA_EASE_QUADRATIC_OUT       2
+#define LA_EASE_QUADRATIC_INOUT     3
+#define LA_EASE_CUBIC_IN            4
+#define LA_EASE_CUBIC_OUT           5
+#define LA_EASE_CUBIC_INOUT         6
+#define LA_EASE_QUARTIC_IN          7
+#define LA_EASE_QUARTIC_OUT         8
+#define LA_EASE_QUARTIC_INOUT       9
+#define LA_EASE_QUINTIC_IN          10
+#define LA_EASE_QUINTIC_OUT         11
+#define LA_EASE_QUINTIC_INOUT       12
+#define LA_EASE_SINUSOIDAL_IN       13
+#define LA_EASE_SINUSOIDAL_OUT      14
+#define LA_EASE_SINUSOIDAL_INOUT    15
+#define LA_EASE_EXPONENTIAL_IN      16
+#define LA_EASE_EXPONENTIAL_OUT     17
+#define LA_EASE_EXPONENTIAL_INOUT   18
+#define LA_EASE_CIRCULAR_IN         19
+#define LA_EASE_CIRCULAR_OUT        20
+#define LA_EASE_CIRCULAR_INOUT      21
+#define LA_EASE_ELASTIC_IN          22
+#define LA_EASE_ELASTIC_OUT         23
+#define LA_EASE_ELASTIC_INOUT       24
+#define LA_EASE_BACK_IN             25
+#define LA_EASE_BACK_OUT            26
+#define LA_EASE_BACK_INOUT          27
+#define LA_EASE_BOUNCE_IN           28
+#define LA_EASE_BOUNCE_OUT          29
+#define LA_EASE_BOUNCE_INOUT        30
 
-#define EASE_WIDTH		32
+#define LA_EASE_WIDTH		32
 // data was generaged using TWEEN.js
-uint8_t led_layer_ease_curve[][32] = {
+uint8_t LA_ease_curve[][32] = {
 {  0,  8, 16, 24, 32, 41, 49, 57, 65, 74, 82, 90, 98,106,115,123,131,139,148,156,164,172,180,189,197,205,213,222,230,238,246,255}, // 0 Linear.None
 {  0,  0,  1,  2,  4,  6,  9, 13, 16, 21, 26, 32, 38, 44, 52, 59, 67, 76, 85, 95,106,117,128,140,152,165,179,193,208,223,238,255}, // 1 Quadratic.In
 {  0, 16, 31, 46, 61, 75, 89,102,114,126,137,148,159,169,178,187,195,202,210,216,222,228,233,238,241,245,248,250,252,253,254,255}, // 2 Quadratic.Out
@@ -106,10 +100,10 @@ typedef struct
 	uint8_t always_on;
 	uint8_t refcount;
 	uint8_t activated;
-} led_layer_t;
+} LA_layer_t;
 
-led_layer_t led_layers_info[MAX_LAYERS];
-uint8_t led_layers[MAX_LAYERS][MAX_PIXELS];
+LA_layer_t LA_layer_info[MAX_LAYERS];
+uint8_t LA_layer[MAX_LAYERS][MAX_PIXELS];
 
 typedef struct 
 {
@@ -118,87 +112,87 @@ typedef struct
 	uint16_t start;
 	uint16_t duration;
 	uint8_t  data[6];
-} led_animation_t;
+} LA_animation_t;
 
-led_animation_t led_animations[MAX_ANIMATIONS];
+LA_animation_t LA_animations[MAX_ANIMATIONS];
 
-uint8_t led_animation_count;
-uint16_t global_tick;
+uint8_t LA_animation_count;
+uint16_t LA_global_tick;
 
-inline uint8_t is_valid_layer(uint8_t lidx)
+inline uint8_t LA_is_valid_layer(uint8_t lidx)
 {
 	return lidx < MAX_LAYERS;
 }
 
-inline uint8_t is_valid_pixel(uint8_t lidx, uint8_t pidx)
+inline uint8_t LA_is_valid_pixel(uint8_t lidx, uint8_t pidx)
 {
 	return lidx < MAX_LAYERS && pidx < MAX_PIXELS;
 }
 
-inline void led_layer_set_mode(uint8_t lidx, uint8_t mode)
+inline void LA_set_mode(uint8_t lidx, uint8_t mode)
 {
-	if (is_valid_layer(lidx))
-		led_layers_info[lidx].blend_mode = mode;
+	if (LA_is_valid_layer(lidx))
+		LA_layer_info[lidx].blend_mode = mode;
 }
 
-inline void led_layer_ref(uint8_t lidx)
+inline void LA_ref(uint8_t lidx)
 {
-	if (is_valid_layer(lidx))
-		led_layers_info[lidx].refcount ++;
+	if (LA_is_valid_layer(lidx))
+		LA_layer_info[lidx].refcount ++;
 }
 
-inline void led_layer_unref(uint8_t lidx)
+inline void LA_unref(uint8_t lidx)
 {
-	if (is_valid_layer(lidx))
-		led_layers_info[lidx].refcount --;
+	if (LA_is_valid_layer(lidx))
+		LA_layer_info[lidx].refcount --;
 }
 
-inline void led_layer_set_pixel(uint8_t lidx, uint8_t pidx, uint8_t value)
+inline void LA_set_pixel(uint8_t lidx, uint8_t pidx, uint8_t value)
 {
-	if (!is_valid_pixel(lidx, pidx))
+	if (!LA_is_valid_pixel(lidx, pidx))
 		return;
 
-	led_layers[lidx][pidx] = value;
+	LA_layer[lidx][pidx] = value;
 }
 
-inline void led_layer_set_max_pixel(uint8_t lidx, uint8_t pidx, uint8_t value)
+inline void LA_set_max_pixel(uint8_t lidx, uint8_t pidx, uint8_t value)
 {
-	if (!is_valid_pixel(lidx, pidx))
+	if (!LA_is_valid_pixel(lidx, pidx))
 		return;
 
-	led_layers[lidx][pidx] = led_layers[lidx][pidx] > value
-		? led_layers[lidx][pidx]
+	LA_layer[lidx][pidx] = LA_layer[lidx][pidx] > value
+		? LA_layer[lidx][pidx]
 		: value;
 }
 
-inline void led_pixels_clear(uint8_t* pixels, uint8_t value)
+inline void LA_pixels_clear(uint8_t* pixels, uint8_t value)
 {
 	memset(pixels, value, MAX_PIXELS);
 }
 
-inline void led_layer_clear(uint8_t lidx, uint8_t value)
+inline void LA_layer_clear(uint8_t lidx, uint8_t value)
 {
-	if (!is_valid_layer(lidx))
+	if (!LA_is_valid_layer(lidx))
 		return;
 
-	led_pixels_clear(led_layers[lidx], value);
+	LA_pixels_clear(LA_layer[lidx], value);
 }
 
-inline uint8_t led_layer_flatten_pixel(uint8_t pidx)
+inline uint8_t LA_flatten_pixel(uint8_t pidx)
 {
 	uint8_t value = 0;
 
 	for (uint8_t lidx = 0; lidx < MAX_LAYERS; ++lidx)
 	{
-		if (led_layers_info[lidx].activated)
+		if (LA_layer_info[lidx].activated)
 		{
-			uint8_t px = led_layers[lidx][pidx];
-			uint8_t blend = led_layers_info[lidx].blend_mode;
-			if (blend == BLEND_TRANSPARENT && value < px)
+			uint8_t px = LA_layer[lidx][pidx];
+			uint8_t blend = LA_layer_info[lidx].blend_mode;
+			if (blend == LA_BLEND_TRANSPARENT && value < px)
 			{
 				value = px;
 			}
-			else if (blend == BLEND_OVERWRITE)
+			else if (blend == LA_BLEND_OVERWRITE)
 			{
 				return px;
 			}
@@ -208,16 +202,16 @@ inline uint8_t led_layer_flatten_pixel(uint8_t pidx)
 	return value;
 }
 
-led_animation_t* create_animation(uint8_t type, uint8_t origin, uint16_t duration)
+LA_animation_t* LA_create_animation(uint8_t type, uint8_t origin, uint16_t duration)
 {
-	if (led_animation_count >= MAX_ANIMATIONS)
+	if (LA_animation_count >= MAX_ANIMATIONS)
 		return 0x0;
 
-	led_animation_t* ani = &led_animations[led_animation_count++];
+	LA_animation_t* ani = &LA_animations[LA_animation_count++];
 
 	ani->type = type;
 	ani->origin = origin;
-	ani->start = global_tick;
+	ani->start = LA_global_tick;
 	ani->duration = duration;
 
 	ani->data[0] = 0;
@@ -230,7 +224,7 @@ led_animation_t* create_animation(uint8_t type, uint8_t origin, uint16_t duratio
 	return ani;
 }
 
-void animate_0(led_animation_t* ani, uint16_t tick)
+void LA_animate_0(LA_animation_t* ani, uint16_t tick)
 {
 #define ANIM0_WIDTH 5
 
@@ -241,8 +235,8 @@ void animate_0(led_animation_t* ani, uint16_t tick)
 		if (p>255) p = 510 - p;
 		uint8_t value = ((p<=0 || 255<p) ? 0 : p) / (i*i+1);
 		
-		led_layer_set_max_pixel(1, (ani->origin-i)%MAX_PIXELS, value);
-		led_layer_set_max_pixel(1, (ani->origin+i)%MAX_PIXELS, value);
+		LA_set_max_pixel(1, (ani->origin-i)%MAX_PIXELS, value);
+		LA_set_max_pixel(1, (ani->origin+i)%MAX_PIXELS, value);
 
 		if (value != 0)
 			alive = 1;
@@ -253,34 +247,34 @@ void animate_0(led_animation_t* ani, uint16_t tick)
 	}
 }
 
-uint8_t led_layer_ease(uint16_t tick, uint16_t dur, uint8_t ei)
+uint8_t LA_ease(uint16_t tick, uint16_t dur, uint8_t ei)
 {
-	uint16_t idx = (tick * EASE_WIDTH) / dur;
-	return led_layer_ease_curve[ei][idx];
+	uint16_t idx = (tick * LA_EASE_WIDTH) / dur;
+	return LA_ease_curve[ei][idx];
 }
 
-uint8_t led_layer_ease_r(uint16_t tick, uint16_t dur, uint8_t ei)
+uint8_t LA_ease_reverse(uint16_t tick, uint16_t dur, uint8_t ei)
 {
-	uint16_t idx = ((dur - tick) * EASE_WIDTH) / dur;
-	return led_layer_ease_curve[ei][idx];
+	uint16_t idx = ((dur - tick) * LA_EASE_WIDTH) / dur;
+	return LA_ease_curve[ei][idx];
 }
 
-void animate_1(led_animation_t* ani, uint16_t tick)
+void LA_animate_1(LA_animation_t* ani, uint16_t tick)
 {
 	// 0 - ease function
 	uint8_t v;
 	if (ani->data[0] == 0)
 	{
-		v = (uint16_t) led_layer_ease(tick, ani->duration, ani->data[1]) * ani->data[2] / 255;
+		v = (uint16_t) LA_ease(tick, ani->duration, ani->data[1]) * ani->data[2] / 255;
 	}
 	else
 	{
-		v = (uint16_t) led_layer_ease_r(tick, ani->duration, ani->data[1]) * ani->data[2] / 255;
+		v = (uint16_t) LA_ease_reverse(tick, ani->duration, ani->data[1]) * ani->data[2] / 255;
 	}
-	led_layer_set_max_pixel(1, ani->origin, v);
+	LA_set_max_pixel(1, ani->origin, v);
 }
 
-void animate_2(led_animation_t* ani, uint16_t tick)
+void LA_animate_2(LA_animation_t* ani, uint16_t tick)
 {
 	if (ani->data[0] == 0)
 		return;
@@ -289,7 +283,7 @@ void animate_2(led_animation_t* ani, uint16_t tick)
 
 //print("SP ");
 
-	uint8_t current_spread = led_layer_ease(tick, ani->duration, ani->data[1]);
+	uint8_t current_spread = LA_ease(tick, ani->duration, ani->data[1]);
 	while (last_spread * ani->data[0] <= current_spread)
 	{
 
@@ -297,7 +291,7 @@ void animate_2(led_animation_t* ani, uint16_t tick)
 
 		if (last_spread == 0)
 		{
-			led_animation_t * ani0 = create_animation(1, ani->origin, ani->data[2]);
+			LA_animation_t * ani0 = LA_create_animation(1, ani->origin, ani->data[2]);
 			if (ani0 != 0x0)
 			{
 				ani0->data[0] = 1;		// decreasing
@@ -307,14 +301,14 @@ void animate_2(led_animation_t* ani, uint16_t tick)
 		}
 		else
 		{
-			led_animation_t * ani0 = create_animation(1, (ani->origin-last_spread) % MAX_PIXELS, ani->data[2] - last_spread * 10);
+			LA_animation_t * ani0 = LA_create_animation(1, (ani->origin-last_spread) % MAX_PIXELS, ani->data[2] - last_spread * 10);
 			if (ani0 != 0x0)
 			{
 				ani0->data[0] = 1;		// decreasing
 				ani0->data[1] = ani->data[3];
 				ani0->data[2] = 255 - last_spread * 20;
 			}
-			led_animation_t * ani1 = create_animation(1, (ani->origin+last_spread) % MAX_PIXELS, ani->data[2] - last_spread * 10);
+			LA_animation_t * ani1 = LA_create_animation(1, (ani->origin+last_spread) % MAX_PIXELS, ani->data[2] - last_spread * 10);
 			if (ani1 != 0x0)
 			{
 				ani1->data[0] = 1;		// decreasing
@@ -330,42 +324,42 @@ void animate_2(led_animation_t* ani, uint16_t tick)
 
 }
 
-typedef void (*ani_fun_t)(led_animation_t* ani, uint16_t tick);
+typedef void (*LA_animation_fun_t)(LA_animation_t* ani, uint16_t tick);
 
-ani_fun_t led_layer_ani_funcs[] = {
-	animate_0,
-	animate_1,
-	animate_2
+LA_animation_fun_t LA_ani_funcs[] = {
+	LA_animate_0,
+	LA_animate_1,
+	LA_animate_2
 };
 
-uint8_t led_layer_update_animation()
+uint8_t LA_update_animation()
 {
-	if (led_animation_count == 0)
+	if (LA_animation_count == 0)
 	{
 		static uint16_t lt = 0;
-		if (lt == global_tick)
+		if (lt == LA_global_tick)
 		{
-			led_layers_info[1].refcount = 0;
+			LA_layer_info[1].refcount = 0;
 			return 1;
 		}
-		else if (lt < global_tick || global_tick + 500 < lt)
+		else if (lt < LA_global_tick || LA_global_tick + 500 < lt)
 		{
-			lt = global_tick + 500;
+			lt = LA_global_tick + 500;
 		}
 		return 0;
 	}
 
-	led_layers_info[1].refcount = 1;
-	led_layer_clear(1, 0);
+	LA_layer_info[1].refcount = 1;
+	LA_layer_clear(1, 0);
 
 	// animating
-	for (int i=0; i<led_animation_count; ++i)
+	for (int i=0; i<LA_animation_count; ++i)
 	{
-		led_animation_t* ani = &led_animations[i];
-		if (ani->type < sizeof(led_layer_ani_funcs))
+		LA_animation_t* ani = &LA_animations[i];
+		if (ani->type < sizeof(LA_ani_funcs))
 		{
-			uint16_t tick = global_tick - ani->start;
-			(*led_layer_ani_funcs[ani->type])(ani, tick);
+			uint16_t tick = LA_global_tick - ani->start;
+			(*LA_ani_funcs[ani->type])(ani, tick);
 
 			if (tick == ani->duration)
 			{
@@ -375,17 +369,17 @@ uint8_t led_layer_update_animation()
 	}
 
 	// compacting
-	for (int i=0; i<led_animation_count; ++i)
+	for (int i=0; i<LA_animation_count; ++i)
 	{
 		// if finished animation
-		if (led_animations[i].type == 0xff)
+		if (LA_animations[i].type == 0xff)
 		{
-			while(i < led_animation_count)
+			while(i < LA_animation_count)
 			{
-				led_animation_count--;
-				if (led_animations[led_animation_count].type != 0xff)
+				LA_animation_count--;
+				if (LA_animations[LA_animation_count].type != 0xff)
 				{
-					led_animations[i] = led_animations[led_animation_count];
+					LA_animations[i] = LA_animations[LA_animation_count];
 					break;
 				}
 			}
@@ -395,86 +389,64 @@ uint8_t led_layer_update_animation()
 	return 1;
 }
 
-uint8_t* led_current_pagebuffer()
+uint8_t* LA_get_pagebuffer()
 {
-	return led_layer_pagebuffer;
+	return LA_pagebuffer;
 }
 
-int led_pagebuffer_size()
+int LA_get_pagebuffer_size()
 {
-	return sizeof(led_layer_pagebuffer);
+	return sizeof(LA_pagebuffer);
 }
 
-void LED_layer_capability( uint8_t state, uint8_t stateType, uint8_t *args )
-{
-//	uint8_t command = args[0];
-//	uint8_t layer   = args[1];
-//	uint8_t index   = args[2];
-//	uint8_t value   = args[3];
-
-/*
-	switch(command)
-	{
-		case LEDLAYER_COMMAND_CLEARLAYER:
-			//led_layer_clear(layer, value);
-			break;
-		case LEDLAYER_COMMAND_SETPIXEL:
-			//led_layer_set_pixel(layer, index, value);
-			break;
-		case LEDLAYER_COMMAND_NONE:
-			break;
-	}
-*/
-}
-
-void LED_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
 	uint8_t index = args[0];
 
 	if (stateType == 0 && state == 0x01)
 	{
 #if 0
-		led_animation_t* ani = create_animation(1, index, 100);
+		LA_animation_t* ani = LA_create_animation(1, index, 100);
 		if (ani != 0x0)
 		{
 			ani->data[0] = 100;			// pixel interval
-			ani->data[1] = EASE_SINUSOIDAL_OUT;	// pixel curve
+			ani->data[1] = LA_EASE_SINUSOIDAL_OUT;	// pixel curve
 		}
 #else
-		led_animation_t* ani = create_animation(2, index, 50);
+		LA_animation_t* ani = LA_create_animation(2, index, 50);
 		if (ani != 0x0)
 		{
 			ani->data[0] = 70;			// spread interval
-			ani->data[1] = EASE_QUINTIC_OUT;	// spreading curve
+			ani->data[1] = LA_EASE_QUINTIC_OUT;	// spreading curve
 			ani->data[2] = 50;			// pixel interval
-			ani->data[3] = EASE_SINUSOIDAL_OUT;	// pixel curve
+			ani->data[3] = LA_EASE_SINUSOIDAL_OUT;	// pixel curve
 		}
 #endif
 	}
 }
 
-void led_layer_setup()
+void LA_setup()
 {
-	led_layers_info[0].blend_mode = BLEND_TRANSPARENT;
-	led_layers_info[0].always_on  = 1;
-	led_layers_info[0].refcount   = 0;
-	led_layers_info[0].activated  = 0;
+	LA_layer_info[0].blend_mode = LA_BLEND_TRANSPARENT;
+	LA_layer_info[0].always_on  = 1;
+	LA_layer_info[0].refcount   = 0;
+	LA_layer_info[0].activated  = 0;
 
-	led_layers_info[1].blend_mode = BLEND_OVERWRITE;
-	led_layers_info[1].always_on  = 0;
-	led_layers_info[1].refcount   = 0;
-	led_layers_info[1].activated  = 0;
+	LA_layer_info[1].blend_mode = LA_BLEND_OVERWRITE;
+	LA_layer_info[1].always_on  = 0;
+	LA_layer_info[1].refcount   = 0;
+	LA_layer_info[1].activated  = 0;
 
-	led_layers_info[2].blend_mode = BLEND_OVERWRITE;
-	led_layers_info[2].always_on  = 1;
-	led_layers_info[2].refcount   = 0;
-	led_layers_info[2].activated  = 0;
+	LA_layer_info[2].blend_mode = LA_BLEND_OVERWRITE;
+	LA_layer_info[2].always_on  = 1;
+	LA_layer_info[2].refcount   = 0;
+	LA_layer_info[2].activated  = 0;
 
-	led_layer_clear(2, 255);
+	LA_layer_clear(2, 255);
 }
 
 
-uint8_t led_layer_elapsed_next_update_time()
+uint8_t LA_is_update_time_passed()
 {
 	static uint32_t last_update_10ms = 0;
 
@@ -487,23 +459,23 @@ uint8_t led_layer_elapsed_next_update_time()
 	return 0;
 }
 
-uint8_t led_layer_update_pixels()
+uint8_t LA_update_pixels()
 {
 	uint8_t updated = 0;
 
 	for (uint8_t lidx = 1; lidx < MAX_LAYERS; ++lidx)
 	{
 		uint8_t activated =
-			led_layers_info[lidx].always_on ||
-			(led_layers_info[lidx].refcount > 0);
+			LA_layer_info[lidx].always_on ||
+			(LA_layer_info[lidx].refcount > 0);
 
 		if (activated)
 		{
-			uint8_t blend = led_layers_info[lidx].blend_mode;
-			uint8_t* psrc = &led_layers[lidx][0];
-			uint8_t* pdst = led_layer_pagebuffer + 2;
+			uint8_t blend = LA_layer_info[lidx].blend_mode;
+			uint8_t* psrc = &LA_layer[lidx][0];
+			uint8_t* pdst = LA_pagebuffer + 2;
 
-			if (blend == BLEND_TRANSPARENT)
+			if (blend == LA_BLEND_TRANSPARENT)
 			{
 				for (uint8_t i=0, j = 0; i<MAX_PIXELS; i++)
 				{
@@ -522,7 +494,7 @@ uint8_t led_layer_update_pixels()
 					}
 				}
 			}
-			else if (blend == BLEND_OVERWRITE)
+			else if (blend == LA_BLEND_OVERWRITE)
 			{
 				for (uint8_t i=0, j = 0; i<MAX_PIXELS; i++)
 				{
@@ -542,15 +514,15 @@ uint8_t led_layer_update_pixels()
 	return updated;
 }
 
-uint8_t led_layer_update()
+uint8_t LA_update()
 {
-	if (!led_layer_elapsed_next_update_time())
+	if (!LA_is_update_time_passed())
 		return 0;
 
-	uint8_t u1 = led_layer_update_animation();
-	uint8_t u2 = led_layer_update_pixels();
+	uint8_t u1 = LA_update_animation();
+	uint8_t u2 = LA_update_pixels();
 
-	global_tick ++;
+	LA_global_tick ++;
 
 	return u1 || u2;
 }
@@ -558,10 +530,10 @@ uint8_t led_layer_update()
 
 #if 0
 #endif
-//uint8_t* led_current_pagebuffer() { return 0; }
-//uint8_t led_pagebuffer_size() { return 0; }
-//void LED_layer_capability( uint8_t state, uint8_t stateType, uint8_t *args ) {}
-//void LED_press_capability( uint8_t state, uint8_t stateType, uint8_t *args ) {}
-//void led_layer_setup() {}
-//uint8_t led_layer_update() { return 0; }
+//uint8_t* LA_get_pagebuffer() { return 0; }
+//uint8_t LA_get_pagebuffer_size() { return 0; }
+//void LA_layer_capability( uint8_t state, uint8_t stateType, uint8_t *args ) {}
+//void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args ) {}
+//void LA_setup() {}
+//uint8_t LA_update() { return 0; }
 
