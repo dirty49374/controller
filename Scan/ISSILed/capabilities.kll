@@ -113,7 +113,6 @@ LAScreenToPageBufferMap = "
 ";
 
 
-recordingControl => Output_recordingControl_capability( cmd : 1, slot : 1 );
 ledPressAnimation => LA_pressAnimation_capability( type:1 );
 ledPress => LA_press_capability( y:1, x:1 );
 ledGuide => LA_ledGuide_capability( r0:2, r1:2, r2:2, r3:2 ,r4:2 );

@@ -72,13 +72,13 @@ ResultMacro 	  RecodableMacroList[MAX_RECORD];
 ResultMacroRecord RecordableMacroRecordList[MAX_RECORD];
 uint8_t 	  RecordableGuideBuffer[MAX_RECORD][MAX_RECORD_BUFFER_SZ];
 
-uint8_t		  RecordingSendUsbKeyOutCapabilityIndex;
+uint8_t		  RecordingUsbCodeSendCapabilityIndex;
 uint8_t		  RecordingControlCapabilityIndex;
 uint8_t		  RecordingStopped;
 
 extern void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args );
 extern void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args );
-extern void Output_recordingSendUsbKey_capability( uint8_t state, uint8_t stateType, uint8_t *args );
+extern void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args );
 
 // -- recording control end
 
@@ -178,8 +178,8 @@ void Result_setup()
 	{
 		if (CapabilitiesList[i].func == Output_recordingControl_capability)
 			RecordingControlCapabilityIndex = i;
-		else if (CapabilitiesList[i].func == Output_recordingSendUsbKey_capability)
-			RecordingSendUsbKeyOutCapabilityIndex = i;
+		else if (CapabilitiesList[i].func == Output_recordingUsbCodeSend_capability)
+			RecordingUsbCodeSendCapabilityIndex = i;
 		
 	}
 }
@@ -218,7 +218,7 @@ void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8
 	// Display capability name
 	if ( stateType == 0xFF && state == 0xFF )
 	{
-		print("Output_recordControl_capability(cmd,slot)");
+		print("Output_recordingControl_capability(cmd,slot)");
 		return;
 	}
 
@@ -298,12 +298,12 @@ void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8
 	}
 }
 
-void Output_recordingSendUsbKey_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
 	// Display capability name
 	if ( stateType == 0xFF && state == 0xFF )
 	{
-		print("Output_recordAndSendUsbKey_capability(usbCode)");
+		print("Output_recordingUsbCodeSend_capability(usbCode)");
 		return;
 	}
 
