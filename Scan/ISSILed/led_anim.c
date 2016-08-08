@@ -54,7 +54,7 @@ enum LA_layer_kind_t
 enum LA_layer_mode_t
 {
 	LA_BLEND_TRANSPARENT 	= 0x01,
-	LA_BLEND_OVERWRITE 	= 0x02
+	LA_BLEND_OPAQUE 	= 0x02
 };
 
 typedef struct
@@ -628,29 +628,33 @@ void LA_ledGuide_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 	if (stateType == 0 && state == 0x01)
 	{
 		LA_layer_set_bitmap(LA_LAYER_GUIDE, args, 255);
+		LA_layer_ref(LA_LAYER_GUIDE);
+
 		last_updated = 1;
 	}
 	// release
 	else if (stateType == 0 && state == 0x03)
 	{
 		LA_layer_clear(LA_LAYER_GUIDE, 0);
+		LA_layer_unref(LA_LAYER_GUIDE);
+
 		last_updated = 1;
 	}
 }
 
 void LA_setup()
 {
-	LA_layer_info[0].blend_mode = LA_BLEND_TRANSPARENT;
-	LA_layer_info[0].always_on  = 1;
+	LA_layer_info[0].blend_mode = LA_BLEND_OPAQUE;
+	LA_layer_info[0].always_on  = 0;
 	LA_layer_info[0].refcount   = 0;
 	LA_layer_info[0].activated  = 0;
 
-	LA_layer_info[1].blend_mode = LA_BLEND_OVERWRITE;
+	LA_layer_info[1].blend_mode = LA_BLEND_OPAQUE;
 	LA_layer_info[1].always_on  = 0;
 	LA_layer_info[1].refcount   = 0;
 	LA_layer_info[1].activated  = 0;
 
-	LA_layer_info[2].blend_mode = LA_BLEND_OVERWRITE;
+	LA_layer_info[2].blend_mode = LA_BLEND_OPAQUE;
 	LA_layer_info[2].always_on  = 1;
 	LA_layer_info[2].refcount   = 0;
 	LA_layer_info[2].activated  = 0;
@@ -706,7 +710,7 @@ void LA_merge_layers()
 					psrc++;
 				}
 			}
-			else if (blend == LA_BLEND_OVERWRITE)
+			else if (blend == LA_BLEND_OPAQUE)
 			{
 				for (uint8_t i=0; i<LA_SCREEN_PIXELS; i++)
 				{
