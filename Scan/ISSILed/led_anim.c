@@ -47,7 +47,7 @@
 enum LA_layer_kind_t
 {
 	LA_LAYER_ANIMATION,
-	LA_LAYER_INFORMATION,
+	LA_LAYER_GUIDE,
 	LA_LAYER_BACKGROUND
 };
 
@@ -200,7 +200,7 @@ inline void LA_layer_unref(uint8_t lidx)
 		LA_layer_info[lidx].refcount --;
 }
 
-inline void LA_set_pixel(uint8_t lidx, LA_coord_t c, uint8_t value)
+inline void LA_layer_set_pixel(uint8_t lidx, LA_coord_t c, uint8_t value)
 {
 	if (!LA_is_valid_pixel(lidx, c))
 		return;
@@ -451,10 +451,9 @@ void LA_create_animation_null(uint8_t layer, LA_coord_t coord, uint16_t duration
 	LA_create_animation(2, layer, coord, duration);
 }
 
+static uint8_t last_updated = 0;
 uint8_t LA_update_animations()
 {
-	static uint8_t last_animated = 0;
-
 	uint8_t animated = LA_global.animation_count != 0 ? 1 : 0;
 
 	// clear
@@ -504,9 +503,9 @@ uint8_t LA_update_animations()
 		}
 	}
 
-	uint8_t updated = last_animated || animated;
+	uint8_t updated = last_updated || animated;
 
-	last_animated = animated;
+	last_updated = animated;
 
 	return updated;
 }
@@ -571,6 +570,83 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 		}
 
 		LA_global.last_coord = coord;
+	}
+}
+
+void LA_layer_set_bitmap(uint8_t layer, uint8_t* bitmap, uint8_t value)
+{
+	for (uint8_t y=0; y<LA_SCREEN_HEIGHT; ++y)
+	{
+		uint8_t mask = 0x80;
+		for (uint8_t x=0; x<LA_SCREEN_WIDTH; ++x)
+		{
+			if (mask == 0)
+			{
+				print("++" NL);
+				mask = 0x80;
+				bitmap++;
+			}
+			printInt16(y);
+			print(",");
+			printInt16(x);
+			print(":");
+			printHex(mask);
+			print(NL);
+
+			if ((*bitmap & mask) != 0)
+			{
+				print("SET" NL);
+				LA_layer_set_pixel(layer, LA_coord(x, y), value);
+			}
+
+			mask = mask >> 1;
+		}
+
+		bitmap++;
+	}
+}
+
+void LA_ledGuide_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+	// Display capability name
+	if ( stateType == 0xFF && state == 0xFF )
+	{
+		print("LA_ledGuide_capability(type)");
+		return;
+	}
+
+	
+	// press
+	if (stateType == 0 && state == 0x01)
+	{
+			printHex(args[0]);
+			print(":");
+			printHex(args[1]);
+			print(":");
+			printHex(args[2]);
+			print(":");
+			printHex(args[3]);
+			print(":");
+			printHex(args[4]);
+			print(":");
+			printHex(args[5]);
+			print(":");
+			printHex(args[6]);
+			print(":");
+			printHex(args[7]);
+			print(":");
+			printHex(args[8]);
+			print(":");
+			printHex(args[9]);
+			print(NL);
+		LA_layer_set_bitmap(LA_LAYER_GUIDE, args, 255);
+		last_updated = 1;
+	}
+	// release
+	else if (stateType == 0 && state == 0x03)
+	{
+		LA_layer_clear(LA_LAYER_GUIDE, 0);
+		last_updated = 1;
 	}
 }
 
