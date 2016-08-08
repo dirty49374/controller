@@ -582,20 +582,12 @@ void LA_layer_set_bitmap(uint8_t layer, uint8_t* bitmap, uint8_t value)
 		{
 			if (mask == 0)
 			{
-				print("++" NL);
 				mask = 0x80;
 				bitmap++;
 			}
-			printInt16(y);
-			print(",");
-			printInt16(x);
-			print(":");
-			printHex(mask);
-			print(NL);
 
 			if ((*bitmap & mask) != 0)
 			{
-				print("SET" NL);
 				LA_layer_set_pixel(layer, LA_coord(x, y), value);
 			}
 
@@ -619,26 +611,6 @@ void LA_ledGuide_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 	// press
 	if (stateType == 0 && state == 0x01)
 	{
-			printHex(args[0]);
-			print(":");
-			printHex(args[1]);
-			print(":");
-			printHex(args[2]);
-			print(":");
-			printHex(args[3]);
-			print(":");
-			printHex(args[4]);
-			print(":");
-			printHex(args[5]);
-			print(":");
-			printHex(args[6]);
-			print(":");
-			printHex(args[7]);
-			print(":");
-			printHex(args[8]);
-			print(":");
-			printHex(args[9]);
-			print(NL);
 		LA_layer_set_bitmap(LA_LAYER_GUIDE, args, 255);
 		last_updated = 1;
 	}
