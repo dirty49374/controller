@@ -46,8 +46,8 @@
 
 enum LA_layer_kind_t
 {
-	LA_LAYER_ANIMATION,
 	LA_LAYER_GUIDE,
+	LA_LAYER_ANIMATION,
 	LA_LAYER_BACKGROUND
 };
 
@@ -378,6 +378,24 @@ void LA_animate_1(LA_animation_t* ani, uint16_t tick)
 
 void LA_animate_2(LA_animation_t* ani, uint16_t tick)
 {
+	uint8_t v;
+	if (ani->data[0] == 0)
+		v = (uint16_t) LA_ease(tick, ani->duration, LA_EASE_SINUSOIDAL_IN);
+	else if (ani->data[0] == 1)
+		v = 255;
+	else if (ani->data[0] == 2)
+		v = (uint16_t) LA_ease_reverse(tick, ani->duration, LA_EASE_SINUSOIDAL_IN);
+	else
+		v = 0;
+
+	LA_layer_clear(LA_LAYER_BACKGROUND, v);
+
+	if (tick == ani->duration - 1)
+	{
+		ani->data[0] = ani->data[0] >= 3 ? 0 : ani->data[0] + 1;
+		ani->start = LA_global.tick;
+		ani->duration = 200;
+	}
 }
 
 typedef void (*LA_animation_fun_t)(LA_animation_t* ani, uint16_t tick);
@@ -446,9 +464,9 @@ void LA_create_animation_moving_pixels(uint8_t layer, LA_coord_t coord, uint16_t
 	LA_create_animation_a_moving_pixel(layer, coord, duration, di);
 }
 
-void LA_create_animation_null(uint8_t layer, LA_coord_t coord, uint16_t duration)
+void LA_create_animation_background(uint16_t duration)
 {
-	LA_create_animation(2, layer, coord, duration);
+	LA_create_animation(2, LA_LAYER_BACKGROUND, LA_coord(0, 0), duration);
 }
 
 static uint8_t last_updated = 0;
@@ -469,7 +487,6 @@ uint8_t LA_update_animations()
 			uint16_t tick = LA_global.tick - ani->start;
 
 			(*fun)(ani, tick);
-			LA_animate_0(ani, tick);
 
 			if (tick == ani->duration)
 			{
@@ -565,7 +582,6 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 				break;
 
 			default:
-				LA_create_animation_null(LA_LAYER_ANIMATION, coord, 100);
 				break;
 		}
 
@@ -630,7 +646,7 @@ void LA_setup()
 	LA_layer_info[0].activated  = 0;
 
 	LA_layer_info[1].blend_mode = LA_BLEND_OVERWRITE;
-	LA_layer_info[1].always_on  = 1;
+	LA_layer_info[1].always_on  = 0;
 	LA_layer_info[1].refcount   = 0;
 	LA_layer_info[1].activated  = 0;
 
@@ -638,6 +654,8 @@ void LA_setup()
 	LA_layer_info[2].always_on  = 1;
 	LA_layer_info[2].refcount   = 0;
 	LA_layer_info[2].activated  = 0;
+
+	LA_create_animation_background(200);
 
 	LA_layer_clear(LA_LAYER_BACKGROUND, 255);
 }
