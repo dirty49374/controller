@@ -75,14 +75,48 @@ ISSILedBrightness_example = "
 
 # LED Animation
 #
-LAWidth => LAWidth_define;
-LAHeight => LAHeight_define;
-LAWidth = 16;
-LAHeight = 4;
+LAScreenWidth => LAScreenWidth_define;
+LAScreenHeight => LAScreenHeight_define;
+LAScreenToPageBufferMap => LAScreenToPageBufferMap_define;
+
+
+LAScreenWidth = 16;
+LAScreenHeight = 5;
+
+#
+# Screen to PageBuffer Map
+#
+#    0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15
+# -------------------------------------------------------------------------------------------------
+# | N/A | ESC |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  0  |  -  |  =  |  \  |  ~  |
+# |     |  00 |  01 |  02 |  03 |  04 |  05 |  06 |  07 |  10 |  11 |  12 |  13 |  14 |  15 |  16 |
+# -------------------------------------------------------------------------------------------------
+# | N/A | TAB |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  P  |  O  |  P  |  [  |  ]  | DEL | DEL |
+# |     |  17 |  20 |  21 |  22 |  23 |  24 |  25 |  26 |  27 |  30 |  31 |  32 |  33 |  34 |  34 |
+# -------------------------------------------------------------------------------------------------
+# | N/A | CTL |  A  |  S  |  D  |  F  |  G  |  H  |  J  |  K  |  L  |  ;  |  '  | RET | RET | RET |
+# |     |  35 |  36 |  37 |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  50 |  51 |  51 |  51 |
+# -------------------------------------------------------------------------------------------------
+# | N/A | SHI |  Z  |  X  |  C  |  V  |  B  |  N  |  M  |  ,  |  .  |  /  | SHI | SHI | FN1 | FN1 |
+# |     |  52 |  53 |  54 |  55 |  56 |  57 |  60 |  61 |  62 |  63 |  64 |  65 |  65 |  66 |  66 |
+# -------------------------------------------------------------------------------------------------
+# | FN2 | ALT | GUI | SPC | SPC | SPC | SPC | SPC | SPC | GUI | GUI | ALT | FN3 | FN3 | FN4 | FN4 |
+# |  67 |  70 |  71 |  72 |  72 |  72 |  72 |  72 |  72 |  73 |  73 |  74 |  74 |  75 |  76 |  76 |
+# -------------------------------------------------------------------------------------------------
+
+LAScreenToPageBufferMap = "
+ { 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16 },
+ { 0xff, 0x17, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x30, 0x31, 0x32, 0x33, 0x34, 0x34 },
+ { 0xff, 0x35, 0x36, 0x37, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x50, 0x51, 0x51, 0x51 },
+ { 0xff, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x65, 0x66, 0x66 },
+ { 0x67, 0x70, 0x71, 0x72, 0x72, 0x72, 0x72, 0x72, 0x72, 0x73, 0x73, 0x74, 0x74, 0x75, 0x76, 0x76 }
+";
+
 
 recordingControl => Output_recordingControl_capability( cmd : 1, slot : 1 );
 #ledLayer => LA_layer_capability( cmd : 1, layer : 1, index : 1, value : 1 );
-ledPress => LA_press_capability( index : 1 );
+ledPress => LA_press_capability( y:1, x:1 );
+ledPressAnimation => LA_pressAnimation_capability( type:1 );
 
 LedLayerModes => LedLayerModes_define;
 LedLayerModes = "

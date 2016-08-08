@@ -640,39 +640,8 @@ uint8_t I2C_Send( uint8_t *data, uint8_t sendLen, uint8_t recvLen )
 }
 
 
-
-
-
-uint8_t  LA_update();
-uint8_t* LA_get_pagebuffer();
-int 	 LA_get_pagebuffer_size();
-
-void LA_scan()
-{
-	static uint8_t led_updated;
-
-	// animation updates every 10 ms.
-	uint8_t u = LA_update();
-
-	// it's possible last animation update was not sent to I2C
-	led_updated = led_updated || u;
-	if (led_updated != 0)
-	{
-		uint8_t* buffer = LA_get_pagebuffer();
-		int size = LA_get_pagebuffer_size();
-
-		if (buffer != 0x0 && size != 0x0)
-		{
-			if ( size < ((I2C_Buffer*)&I2C_TxBuffer)->size )
-			{
-				LED_sendPage( buffer, size, 0 );
-				led_updated = 0;
-			}
-		}
-	}
-}
-
 // LED State processing loop
+void LA_scan();
 unsigned int LED_currentEvent = 0;
 inline uint8_t LED_scan()
 {
@@ -1115,5 +1084,38 @@ void cliFunc_ledCtrl( char* args )
 
 	// Process request
 	LED_control( &control );
+}
+
+uint8_t  LA_update();
+uint8_t* LA_get_pagebuffer();
+int 	 LA_get_pagebuffer_size();
+static uint16_t led_updated;
+void LA_scan()
+{
+
+	// animation updates every 10 ms.
+	uint8_t u = LA_update();
+
+	// it's possible last animation update was not sent to I2C
+	led_updated = led_updated || u;
+
+	if (led_updated != 0)
+	{
+		uint8_t* buffer = LA_get_pagebuffer();
+		int size = LA_get_pagebuffer_size();
+
+		if (buffer != 0x0 && size != 0x0)
+		{
+			if ( size < ((I2C_Buffer*)&I2C_TxBuffer)->size )
+			{
+//print("SEND i2c 0: "); printHex32_op((uint32_t)buffer, 1); print(":"); printHex(size); print(NL);
+//print("SEND i2c 1: "); printHex32_op((uint32_t)LED_defaultBrightness1, 1); print(":"); printHex(sizeof(LED_defaultBrightness1)); print(NL);
+				LED_sendPage( buffer, size, 0 );
+				//LED_sendPage( (uint8_t*) LED_defaultBrightness1, sizeof(LED_defaultBrightness1), 0 );
+
+				led_updated = 0;
+			}
+		}
+	}
 }
 
