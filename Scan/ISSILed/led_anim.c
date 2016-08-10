@@ -2,7 +2,7 @@
 #include <print.h>
 #include <kll_defs.h>
 
-#define LA_MAX_LAYERS		3
+#define LA_MAX_LAYERS		4
 #define LA_MAX_ANIMATIONS	50
 #define	LA_SCREEN_WIDTH		LAScreenWidth_define
 #define	LA_SCREEN_HEIGHT	LAScreenHeight_define
@@ -147,15 +147,6 @@ uint8_t LA_pagebuffer[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* C9-1 -> C9-16 */
 };
 
-// data was generaged using TWEEN.js
-struct
-{
-	uint8_t animation_count;
-	uint8_t press_animation_type;
-	uint16_t tick;
-	LA_coord_t last_coord;
-} LA_global;
-
 uint8_t 		LA_layer[LA_MAX_LAYERS][LA_SCREEN_HEIGHT][LA_SCREEN_WIDTH];
 
 LA_layer_info_t 	LA_layer_info[LA_MAX_LAYERS];
@@ -163,6 +154,16 @@ LA_layer_info_t 	LA_layer_info[LA_MAX_LAYERS];
 uint8_t		LA_layer_merged[LA_SCREEN_PIXELS];
 
 LA_animation_t 	LA_animations[LA_MAX_ANIMATIONS];
+
+struct
+{
+	uint8_t animation_count;
+	uint8_t press_animation_type;
+	uint16_t tick;
+	uint16_t background_animate_start_tick;
+	LA_coord_t last_coord;
+	uint16_t dummy;
+} LA_global;
 
 inline LA_coord_t LA_coord(uint8_t x, uint8_t y)
 {
@@ -376,9 +377,36 @@ void LA_animate_1(LA_animation_t* ani, uint16_t tick)
 	LA_set_max_pixel(ani->layer, ani->origin, v);
 }
 
+inline uint8_t LA_can_animate_background()
+{
+	return LA_global.background_animate_start_tick == LA_global.tick;
+}
+
+inline void LA_did_animate_background()
+{
+	LA_global.background_animate_start_tick++;
+}
+
+inline void LA_postpone_background_animation(uint16_t duration)
+{
+	LA_global.background_animate_start_tick = LA_global.tick + duration;
+}
+
+// background animation
 void LA_animate_2(LA_animation_t* ani, uint16_t tick)
 {
+	if (!LA_can_animate_background())
+	{
+		LA_layer_clear(LA_LAYER_BACKGROUND, 0);
+
+		ani->data[0] = 0;
+		ani->start = LA_global.tick;
+		ani->duration = 200;
+		return;
+	}
+
 	uint8_t v;
+
 	if (ani->data[0] == 0)
 		v = (uint16_t) LA_ease(tick, ani->duration, LA_EASE_SINUSOIDAL_IN);
 	else if (ani->data[0] == 1)
@@ -389,6 +417,8 @@ void LA_animate_2(LA_animation_t* ani, uint16_t tick)
 		v = 0;
 
 	LA_layer_clear(LA_LAYER_BACKGROUND, v);
+
+	LA_did_animate_background();
 
 	if (tick == ani->duration - 1)
 	{
@@ -496,21 +526,32 @@ void LA_create_animation_a_moving_pixel(uint8_t layer, LA_coord_t coord, LA_coor
 	}
 }
 
-void LA_create_animation_moving_vertical_lines(uint8_t layer, LA_coord_t coord, uint16_t duration)
+void LA_create_animation_moving_vertical_lines(uint8_t layer, LA_coord_t coord, uint16_t duration, uint8_t direction)
 {
-	uint16_t dur = duration - 3 * LA_SCREEN_HEIGHT;
+	uint16_t dur = duration;
+	if (direction == 0)
+		dur -= 1 * LA_SCREEN_HEIGHT;
 
 	for (uint8_t y=0; y<LA_SCREEN_HEIGHT; ++y)
 	{
-		dur += 3;
+		if (direction == 0)
+			dur += 1;
+		else
+			dur -= 1;
 
 		LA_coord_t c0 = LA_coord(coord.x, y);
 
 		LA_coord_t c1 = LA_coord(0, y);
-		LA_create_animation_a_moving_pixel(layer, c0, c1, dur);
+		if (direction == 0)
+			LA_create_animation_a_moving_pixel(layer, c0, c1, dur);
+		else
+			LA_create_animation_a_moving_pixel(layer, c1, c0, dur);
 
 		LA_coord_t c2 = LA_coord(LA_SCREEN_WIDTH-1, y);
-		LA_create_animation_a_moving_pixel(layer, c0, c2, dur);
+		if (direction == 0)
+			LA_create_animation_a_moving_pixel(layer, c0, c2, dur);
+		else
+			LA_create_animation_a_moving_pixel(layer, c2, c0, dur);
 	}
 }
 
@@ -587,6 +628,8 @@ int LA_get_pagebuffer_size()
 	return sizeof(LA_pagebuffer);
 }
 
+
+#define PRESSANIMATION_COUNT	5
 void LA_pressAnimation_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
 	// Display capability name
@@ -596,7 +639,18 @@ void LA_pressAnimation_capability( uint8_t state, uint8_t stateType, uint8_t *ar
 		return;
 	}
 
-	LA_global.press_animation_type = args[0] <= 3 ? args[0] : 0;
+	if (stateType == 0 && state == 0x01)
+	{
+		if (args[0] == 255)
+		{
+			if (++LA_global.press_animation_type >= PRESSANIMATION_COUNT)
+				LA_global.press_animation_type = 0;
+		}
+		else if (args[0] < PRESSANIMATION_COUNT)
+		{
+			LA_global.press_animation_type = args[0];
+		}
+	}
 }
 
 void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
@@ -632,7 +686,11 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 				break;
 
 			case 3:
-				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 30);
+				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 30, 0);
+				break;
+
+			case 4:
+				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 15, 0);
 				break;
 
 			default:
@@ -641,6 +699,21 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 
 		LA_global.last_coord = coord;
 	}
+	else if (stateType == 0 && state == 0x03)
+	{
+		switch (LA_global.press_animation_type)
+		{
+			case 4:
+				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 15, 1);
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	// background animation will start 10sec later.
+	LA_postpone_background_animation(10*100);
 }
 
 void LA_layer_set_bitmap(uint8_t layer, uint8_t* bitmap, uint8_t value)
@@ -714,6 +787,7 @@ void LA_setup()
 	LA_layer_info[2].activated  = 0;
 
 	LA_create_animation_background(200);
+	LA_global.background_animate_start_tick = LA_global.tick;
 
 	LA_layer_clear(LA_LAYER_BACKGROUND, 255);
 }
