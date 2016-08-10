@@ -398,12 +398,34 @@ void LA_animate_2(LA_animation_t* ani, uint16_t tick)
 	}
 }
 
+void LA_animate_3(LA_animation_t* ani, uint16_t tick)
+{
+	if (ani->duration == 0)
+		return;
+#define ANI3_DX(x) 		x->data[0]
+#define ANI3_DY(x) 		x->data[1]
+
+	int16_t dx = (int8_t)ANI3_DX(ani);
+	int16_t dy = (int8_t)ANI3_DY(ani);
+
+	int16_t ddx = dx * tick / ani->duration;
+	int16_t ddy = dy * tick / ani->duration;
+
+	int16_t x = (int16_t)ani->origin.x + ddx;
+	int16_t y = (int16_t)ani->origin.y + ddy;
+
+	LA_coord_t c = LA_coord(x, y);
+
+	LA_set_max_pixel(ani->layer, c, 255);
+}
+
 typedef void (*LA_animation_fun_t)(LA_animation_t* ani, uint16_t tick);
 
-LA_animation_fun_t LA_animation_funcs[] = {
+const LA_animation_fun_t LA_animation_funcs[] = {
 	LA_animate_0,
 	LA_animate_1,
-	LA_animate_2
+	LA_animate_2,
+	LA_animate_3
 };
 
 void LA_create_animation_pixel(uint8_t layer, LA_coord_t coord, uint16_t duration, uint8_t ease_type, uint8_t descending, uint8_t max)
@@ -437,7 +459,7 @@ void LA_create_animation_drawline(uint8_t layer, LA_coord_t c0, LA_coord_t c1, u
 	while (c.x != c1.x || c.y != c1.y);
 }
 
-void LA_create_animation_a_moving_pixel(uint8_t layer, LA_coord_t coord, uint16_t duration, uint8_t dir)
+void LA_create_animation_a_random_moving_pixel(uint8_t layer, LA_coord_t coord, uint16_t duration, uint8_t dir)
 {
 	LA_animation_t* ani = LA_create_animation(1, layer, coord, duration);
 	if (ani != 0x0)
@@ -449,19 +471,47 @@ void LA_create_animation_a_moving_pixel(uint8_t layer, LA_coord_t coord, uint16_
 	}
 }
 
-void LA_create_animation_moving_pixels(uint8_t layer, LA_coord_t coord, uint16_t duration)
+void LA_create_animation_random_moving_pixels(uint8_t layer, LA_coord_t coord, uint16_t duration)
 {
 	uint8_t di = micros() & 7;
 
-	LA_create_animation_a_moving_pixel(layer, coord, duration, di);
+	LA_create_animation_a_random_moving_pixel(layer, coord, duration, di);
 
 	di += 2; di &= 7;
 
-	LA_create_animation_a_moving_pixel(layer, coord, duration, di);
+	LA_create_animation_a_random_moving_pixel(layer, coord, duration, di);
 
 	di += 2; di &= 7;
 
-	LA_create_animation_a_moving_pixel(layer, coord, duration, di);
+	LA_create_animation_a_random_moving_pixel(layer, coord, duration, di);
+}
+
+void LA_create_animation_a_moving_pixel(uint8_t layer, LA_coord_t coord, LA_coord_t to, uint16_t duration)
+{
+	LA_animation_t* ani = LA_create_animation(3, layer, coord, duration);
+	if (ani != 0x0)
+	{
+		ANI3_DX(ani) = to.x - coord.x;
+		ANI3_DY(ani) = to.y - coord.y;
+	}
+}
+
+void LA_create_animation_moving_vertical_lines(uint8_t layer, LA_coord_t coord, uint16_t duration)
+{
+	uint16_t dur = duration - 3 * LA_SCREEN_HEIGHT;
+
+	for (uint8_t y=0; y<LA_SCREEN_HEIGHT; ++y)
+	{
+		dur += 3;
+
+		LA_coord_t c0 = LA_coord(coord.x, y);
+
+		LA_coord_t c1 = LA_coord(0, y);
+		LA_create_animation_a_moving_pixel(layer, c0, c1, dur);
+
+		LA_coord_t c2 = LA_coord(LA_SCREEN_WIDTH-1, y);
+		LA_create_animation_a_moving_pixel(layer, c0, c2, dur);
+	}
 }
 
 void LA_create_animation_background(uint16_t duration)
@@ -546,7 +596,7 @@ void LA_pressAnimation_capability( uint8_t state, uint8_t stateType, uint8_t *ar
 		return;
 	}
 
-	LA_global.press_animation_type = args[0] <= 2 ? args[0] : 0;
+	LA_global.press_animation_type = args[0] <= 3 ? args[0] : 0;
 }
 
 void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
@@ -578,7 +628,11 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 				break;
 
 			case 2:
-				LA_create_animation_moving_pixels(LA_LAYER_ANIMATION, coord, 50);
+				LA_create_animation_random_moving_pixels(LA_LAYER_ANIMATION, coord, 50);
+				break;
+
+			case 3:
+				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 30);
 				break;
 
 			default:
@@ -780,4 +834,3 @@ uint8_t LA_update()
 //void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args ) {}
 //void LA_setup() {}
 //uint8_t LA_update() { return 0; }
-
