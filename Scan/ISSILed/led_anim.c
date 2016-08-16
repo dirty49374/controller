@@ -85,6 +85,20 @@ typedef struct
 	uint8_t  	data[6];
 } LA_animation_t;
 
+typedef struct
+{
+	uint8_t x1;
+	uint8_t y1;
+	uint8_t x2;
+	uint8_t y2;
+} LA_rect_t;
+
+typedef struct
+{
+	LA_rect_t rect;
+	uint8_t index;
+} LA_led_position_t;
+
 const uint8_t LA_screen_to_pagebuffer_map[LAScreenHeight_define][LAScreenWidth_define] = {
 LAScreenToPageBufferMap_define
 };
@@ -182,6 +196,14 @@ const uint8_t LA_vscreen_map[5][120] =
 	{ 55,55,55,55,55,55,55,55,55,55,56,56,56,56,56,56,56,56,56,56,57,57,57,57,57,57,57,57,57,57,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,59,59,59,59,59,59,59,59,59,59,60,60,60,60,60,60,60,60,60,60,61,61,61,61,61,61,61,61,61,61,62,62,62,62,62,62,62,62,62,62 }
 };
 
+const LA_led_position_t LA_led_positions[] = {
+	{{0,0,8,8},0}, {{8,0,16,8},1}, {{16,0,24,8},2}, {{24,0,32,8},3}, {{32,0,40,8},4}, {{40,0,48,8},5}, {{48,0,56,8},6}, {{56,0,64,8},7}, {{64,0,72,8},16}, {{72,0,80,8},17}, {{80,0,88,8},18}, {{88,0,96,8},19}, {{96,0,104,8},20}, {{104,0,112,8},21}, {{112,0,120,8},22},
+	{{2,8,10,16},23}, {{12,8,20,16},32}, {{20,8,28,16},33}, {{28,8,36,16},34}, {{36,8,44,16},35}, {{44,8,52,16},36}, {{52,8,60,16},37}, {{60,8,68,16},38}, {{68,8,76,16},39}, {{76,8,84,16},48}, {{84,8,92,16},49}, {{92,8,100,16},50}, {{100,8,108,16},51}, {{110,8,118,16},52},
+	{{3,16,11,24},53}, {{14,16,22,24},54}, {{22,16,30,24},55}, {{30,16,38,24},64}, {{38,16,46,24},65}, {{46,16,54,24},66}, {{54,16,62,24},67}, {{62,16,70,24},68}, {{70,16,78,24},69}, {{78,16,86,24},70}, {{86,16,94,24},71}, {{94,16,102,24},80}, {{107,16,115,24},81},
+	{{5,24,13,32},82}, {{18,24,26,32},83}, {{26,24,34,32},84}, {{34,24,42,32},85}, {{42,24,50,32},86}, {{50,24,58,32},87}, {{58,24,66,32},96}, {{66,24,74,32},97}, {{74,24,82,32},98}, {{82,24,90,32},99}, {{90,24,98,32},100}, {{101,24,109,32},101}, {{112,24,120,32},102},
+	{{1,32,9,40},103}, {{11,32,19,40},112}, {{21,32,29,40},113}, {{51,32,59,40},114}, {{81,32,89,40},115}, {{91,32,99,40},116}, {{101,32,109,40},117}, {{111,32,119,40},118},
+};
+
 
 uint8_t LA_pagebuffer[] = {
 	0xE8, 0x24,
@@ -213,6 +235,72 @@ struct
 	LA_coord_t last_coord;
 	uint16_t dummy;
 } LA_global;
+
+#define LA_MIN(a,b) ((a)<(b) ? (a) : (b))
+#define LA_MAX(a,b) ((a)>(b) ? (a) : (b))
+
+inline LA_rect_t LA_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+{
+	LA_rect_t rect;
+
+	rect.x1 = x;
+	rect.y1 = y;
+	rect.x2 = x + w;
+	rect.y2 = y + h;
+
+	return rect;
+}
+
+inline uint16_t LA_rect_overlap(LA_rect_t r1, LA_rect_t r2)
+{
+	uint8_t min_right = LA_MIN(r1.x2, r2.x2);
+	uint8_t max_left = LA_MAX(r1.x1, r2.x1);
+
+	if (min_right <= max_left)
+		return 0;
+
+	uint8_t min_bottom = LA_MIN(r1.y2, r2.y2);
+	uint8_t max_top = LA_MAX(r1.y1, r2.y1);
+
+	if (min_bottom <= max_top)
+		return 0;
+
+	uint16_t overlap = (uint16_t)(min_right - max_left) * (uint16_t)(min_bottom - max_top);
+
+	return overlap;
+}
+
+inline void LA_fill_rect(LA_rect_t r, uint8_t value)
+{
+	print("fill rect: ");
+	printInt16(r.x1); print(","); printInt16(r.y1);
+	printInt16(r.x2); print("-"); printInt16(r.y2);
+	print(NL);
+	uint8_t* pagebuffer = LA_pagebuffer + 2;
+
+	// might need quad tree optimization
+	for (uint8_t i=0; i<sizeof(LA_led_positions)/sizeof(LA_led_position_t); ++i)
+	{
+		const LA_led_position_t* lp = &LA_led_positions[i];
+
+		uint16_t overlap = LA_rect_overlap(r, lp->rect);
+		if (overlap != 0)
+		{
+			uint16_t size = (lp->rect.x2 - lp->rect.x1) * (lp->rect.y2 - lp->rect.y1);
+			uint8_t v = overlap * value / size;
+			pagebuffer[lp->index] = v;
+
+			printInt16(lp->rect.x1); print(","); printInt16(lp->rect.y1);
+			print("-");
+			printInt16(lp->rect.x2); print(","); printInt16(lp->rect.y2);
+			print("=");
+			printInt16(overlap); print(":"); printInt16(v);
+			print("/");
+			printInt16(size); print("=>"); printInt16(lp->index);
+			print(NL);
+		}
+	}
+}
 
 inline LA_coord_t LA_coord(uint8_t x, uint8_t y)
 {
@@ -725,6 +813,7 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 	if (stateType == 0 && state == 0x01)
 	{
 		//print("Pressed ("); printInt16(coord.x); print(","); printInt16(coord.y); print(")" NL);
+		LA_global.dummy = 0;
 
 		switch (LA_global.press_animation_type)
 		{
@@ -733,6 +822,7 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 				break;
 
 			case 1:
+				LA_global.dummy = 100;
 				LA_create_animation_drawline(LA_LAYER_ANIMATION, LA_global.last_coord, coord, 50);
 				break;
 
@@ -745,10 +835,6 @@ void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 				break;
 
 			case 4:
-				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 15, 0);
-				break;
-
-			case 5:
 				LA_create_animation_moving_vertical_lines(LA_LAYER_ANIMATION, coord, 15, 0);
 				break;
 
@@ -948,6 +1034,32 @@ uint8_t LA_update()
 	{
 		LA_merge_layers();
 		LA_update_pagebuffer();
+
+		if (LA_global.dummy == 100)
+		{
+			static int8_t x, y;
+			static int8_t dx = 1, dy = 0;
+
+			LA_fill_rect(LA_rect(x, y, 1, 40), 255);
+
+			x += dx;
+			y += dy;
+
+			if (x < 0 || 119 < x)
+			{
+				dx = -dx;
+
+				x += dx;
+				x += dx;
+			}
+			if (y < 0 || 39 < y)
+			{
+				dy = -dy;
+
+				y += dy;
+				y += dy;
+			}
+		}
 	}
 
 	LA_global.tick ++;
@@ -957,7 +1069,6 @@ uint8_t LA_update()
 
 	return updated;
 }
-
 
 #if 0
 #endif
