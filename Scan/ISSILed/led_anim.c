@@ -272,10 +272,12 @@ inline uint16_t LA_rect_overlap(LA_rect_t r1, LA_rect_t r2)
 
 inline void LA_fill_rect(LA_rect_t r, uint8_t value)
 {
+/*
 	print("fill rect: ");
 	printInt16(r.x1); print(","); printInt16(r.y1);
 	printInt16(r.x2); print("-"); printInt16(r.y2);
 	print(NL);
+*/
 	uint8_t* pagebuffer = LA_pagebuffer + 2;
 
 	// might need quad tree optimization
@@ -290,6 +292,7 @@ inline void LA_fill_rect(LA_rect_t r, uint8_t value)
 			uint8_t v = overlap * value / size;
 			pagebuffer[lp->index] = v;
 
+/*
 			printInt16(lp->rect.x1); print(","); printInt16(lp->rect.y1);
 			print("-");
 			printInt16(lp->rect.x2); print(","); printInt16(lp->rect.y2);
@@ -298,6 +301,7 @@ inline void LA_fill_rect(LA_rect_t r, uint8_t value)
 			print("/");
 			printInt16(size); print("=>"); printInt16(lp->index);
 			print(NL);
+*/
 		}
 	}
 }
