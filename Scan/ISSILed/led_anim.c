@@ -2,7 +2,7 @@
 #include <print.h>
 #include <kll_defs.h>
 
-#define LA_MAX_LAYERS		4
+#define LA_MAX_LAYERS		3
 #define LA_MAX_ANIMATIONS	50
 #define	LA_SCREEN_WIDTH		LAScreenWidth_define
 #define	LA_SCREEN_HEIGHT	LAScreenHeight_define
