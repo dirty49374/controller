@@ -57,8 +57,8 @@ index_uint_t macroResultMacroPendingListSize = 0;
 
 
 // --- recording control start
-#define MAX_RECORD 			5
-#define MAX_RECORD_BUFFER_SZ 		500
+#define MAX_RECORD 			6
+#define MAX_RECORD_BUFFER_SZ 		512
 #define RECORD_BASE 			10000
 #define RECORDINGCONTROL_TOGGLE		0
 #define RECORDINGCONTROL_PLAY		1
@@ -180,8 +180,18 @@ void Result_setup()
 			RecordingControlCapabilityIndex = i;
 		else if (CapabilitiesList[i].func == Output_recordingUsbCodeSend_capability)
 			RecordingUsbCodeSendCapabilityIndex = i;
-		
 	}
+
+	
+	RecordableGuideBuffer[0][ 0 ] = 1;			// one combo
+	RecordableGuideBuffer[0][ 1 ] = RecordingControlCapabilityIndex;
+	RecordableGuideBuffer[0][ 2 ] = 0x02;
+	RecordableGuideBuffer[0][ 3 ] = 0x2c;
+	RecordableGuideBuffer[0][ 4 ] = 1;			// one combo
+	RecordableGuideBuffer[0][ 5 ] = RecordingControlCapabilityIndex;
+	RecordableGuideBuffer[0][ 6 ] = 0x03;
+	RecordableGuideBuffer[0][ 7 ] = 0x2c;
+	RecordableGuideBuffer[0][ 8 ] = '\0';
 }
 
 
@@ -212,92 +222,7 @@ void Result_process()
 	macroResultMacroPendingListSize = macroResultMacroPendingListTail;
 }
 
-
-void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args )
-{
-	// Display capability name
-	if ( stateType == 0xFF && state == 0xFF )
-	{
-		print("Output_recordingControl_capability(cmd,slot)");
-		return;
-	}
-
-	uint8_t type = args[0];
-	uint8_t data = args[1];
-
-	switch (type)
-	{
-		case RECORDINGCONTROL_TOGGLE:
-			if (data >= MAX_RECORD)
-				return;
-
-			if (CurrentRecordingSlot == data)
-			{
-				// deactivate on press
-				if ( stateType != 0x00 || state != 0x01 )
-					return;
-
-				// stop 
-				print("recording stopped : ");
-				printHex(CurrentRecordingSlot);
-				print(NL);
-
-				CurrentRecordingSlot = 0xFF;
-
-				// prevent restart recording of current key release
-				RecordingStopped = 1;
-			}
-			else
-			{
-				// activate on release
-				if ( stateType != 0x00 || state != 0x03 )
-					return;
-
-				if (RecordingStopped)
-				{
-					RecordingStopped = 0;
-					return;
-				}
-
-				// start new
-				CurrentRecordingSlot = data;
-				CurrentRecordingLength = 0;
-				RecordableGuideBuffer[ CurrentRecordingSlot ][ 0 ] = '\0';
-
-				print("recording started : ");
-				printHex(CurrentRecordingSlot);
-				print(NL);
-			}
-			return;
-
-
-		case RECORDINGCONTROL_PLAY:
-			// activate on press
-			if ( stateType != 0x00 || state != 0x01 )
-				return;
-
-			// stop current recording if exists
-			if (CurrentRecordingSlot != 0xFF)
-			{
-				CurrentRecordingSlot = 0xFF;
-			}
-
-			// replay recording
-			macroResultMacroPendingList[ macroResultMacroPendingListSize++ ] = RECORD_BASE + data;
-			RecordableMacroRecordList[ data ].state = state;
-			RecordableMacroRecordList[ data ].stateType = stateType;
-			return;
-
-		case RECORDINGCONTROL_PRESS:
-			Output_usbCodeSend_capability(0x01, 0, &data);
-			return;
-
-		case RECORDINGCONTROL_RELEASE:
-			Output_usbCodeSend_capability(0x03, 0, &data);
-			return;
-	}
-}
-
+static uint8_t press_seq;
 void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
 	// Display capability name
@@ -333,5 +258,142 @@ void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, u
 			}
 		}
 	}
+	if ( stateType == 0x00 && state == 0x01 )
+		press_seq ++;
+
 	Output_usbCodeSend_capability( state, stateType, &key );
+}
+
+
+void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+	// Display capability name
+	if ( stateType == 0xFF && state == 0xFF )
+	{
+		print("Output_recordingControl_capability(cmd,slot)");
+		return;
+	}
+
+	uint8_t type = args[0];
+	uint8_t data = args[1];
+
+	switch (type)
+	{
+		case RECORDINGCONTROL_TOGGLE:
+			if (data >= MAX_RECORD)
+				return;
+
+			if (CurrentRecordingSlot == data)
+			{
+				// deactivate on press
+				if ( stateType == 0x00 && state == 0x01 )
+				{
+					// stop 
+					print("recording stopped : ");
+					printHex(CurrentRecordingSlot);
+					print(NL);
+
+					uint8_t* p = &RecordableGuideBuffer[CurrentRecordingSlot][0];
+					while(*p != 0x0)
+					{
+						printHex(*p); print(" ");
+						p++;
+					}
+					print(NL);
+
+					CurrentRecordingSlot = 0xFF;
+
+					// prevent restart recording of current key release
+					RecordingStopped = 1;
+				}
+			}
+			else
+			{
+				// activate on release
+				if ( stateType != 0x00 || state != 0x03 )
+					return;
+
+				if (RecordingStopped)
+				{
+					RecordingStopped = 0;
+					return;
+				}
+
+				// start new
+				CurrentRecordingSlot = data;
+				CurrentRecordingLength = 0;
+				RecordableGuideBuffer[ CurrentRecordingSlot ][ 0 ] = '\0';
+
+				print("recording started : ");
+				printHex(CurrentRecordingSlot);
+				print(NL);
+			}
+			return;
+
+
+		case RECORDINGCONTROL_PLAY:
+			// activate on press
+			if ( stateType == 0x00 && state == 0x01 )
+			{
+				// stop current recording if exists
+				if (CurrentRecordingSlot != 0xFF)
+				{
+					CurrentRecordingSlot = 0xFF;
+				}
+
+				// replay recording
+				macroResultMacroPendingList[ macroResultMacroPendingListSize++ ] = RECORD_BASE + data;
+				RecordableMacroRecordList[ data ].state = state;
+				RecordableMacroRecordList[ data ].stateType = stateType;
+			}
+			return;
+
+		case RECORDINGCONTROL_PRESS:
+			Output_usbCodeSend_capability(0x01, 0, &data);
+			return;
+
+		case RECORDINGCONTROL_RELEASE:
+			Output_usbCodeSend_capability(0x03, 0, &data);
+			return;
+	}
+}
+
+static uint8_t unique_press_seq;
+void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+	// Display capability name
+	if ( stateType == 0xFF && state == 0xFF )
+	{
+		print("Output_pressOnUniqueRelease_capability(keycode)");
+		return;
+	}
+
+	uint8_t key = args[0];
+
+	if ( args[0] == 0xff )
+	{
+		// ignore current space press
+		press_seq ++;
+		return;
+	}
+
+	if ( stateType == 0x00 )
+	{
+		if ( state == 0x01 )
+		{
+			unique_press_seq = press_seq;
+		}
+		else if ( state == 0x03 )
+		{
+			if (unique_press_seq == press_seq)
+			{
+				// we replay record 0
+				RecordableGuideBuffer[ 0 ][ 3 ] = key;
+				RecordableGuideBuffer[ 0 ][ 7 ] = key;
+				macroResultMacroPendingList[ macroResultMacroPendingListSize++ ] = RECORD_BASE + 0;
+				RecordableMacroRecordList[ 0 ].state = 0x01;
+				RecordableMacroRecordList[ 0 ].stateType = 0;
+			}
+		}
+	}
 }
