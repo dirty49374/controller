@@ -359,16 +359,18 @@ void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8
 }
 
 static uint8_t unique_press_seq;
+static uint32_t unique_press_tick;
 void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
 	// Display capability name
 	if ( stateType == 0xFF && state == 0xFF )
 	{
-		print("Output_pressOnUniqueRelease_capability(keycode)");
+		print("Output_pressOnUniqueRelease_capability(keycode, within_ms)");
 		return;
 	}
 
 	uint8_t key = args[0];
+	uint16_t within_ms = *(uint16_t*)&args[1];
 
 	if ( args[0] == 0xff )
 	{
@@ -382,17 +384,21 @@ void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, u
 		if ( state == 0x01 )
 		{
 			unique_press_seq = press_seq;
+			unique_press_tick = systick_millis_count;
 		}
 		else if ( state == 0x03 )
 		{
 			if (unique_press_seq == press_seq)
 			{
-				// we replay record 0
-				RecordableGuideBuffer[ 0 ][ 3 ] = key;
-				RecordableGuideBuffer[ 0 ][ 7 ] = key;
-				macroResultMacroPendingList[ macroResultMacroPendingListSize++ ] = RECORD_BASE + 0;
-				RecordableMacroRecordList[ 0 ].state = 0x01;
-				RecordableMacroRecordList[ 0 ].stateType = 0;
+				if (within_ms == 0 || systick_millis_count - unique_press_tick < within_ms)
+				{
+					// we replay record 0
+					RecordableGuideBuffer[ 0 ][ 3 ] = key;
+					RecordableGuideBuffer[ 0 ][ 7 ] = key;
+					macroResultMacroPendingList[ macroResultMacroPendingListSize++ ] = RECORD_BASE + 0;
+					RecordableMacroRecordList[ 0 ].state = 0x01;
+					RecordableMacroRecordList[ 0 ].stateType = 0;
+				}
 			}
 		}
 	}
