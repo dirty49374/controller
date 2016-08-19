@@ -176,3 +176,9 @@ void CustomAction_blockKey_capability( uint8_t state, uint8_t stateType, uint8_t
 	}
 }
 
+void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args ) { }
+void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args ) { }
+void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, uint8_t *args ) { }
+void LA_pressAnimation_capability( uint8_t state, uint8_t stateType, uint8_t *args ) { }
+void LA_press_capability( uint8_t state, uint8_t stateType, uint8_t *args ) { }
+void LA_ledGuide_capability( uint8_t state, uint8_t stateType, uint8_t *args ) { }
