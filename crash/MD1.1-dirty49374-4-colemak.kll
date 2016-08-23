@@ -1,0 +1,31 @@
+Name = "MD1.1";
+Layout = "Standard";
+Base = "StandardBlank";
+Version = "0.2";
+Author = "HaaTa (Jacob Alexander) 2014";
+KLL = "0.3";
+Date = "2014-09-14";
+Generator = "KIICONF 0.2";
+
+# Top Row
+'e' : 'f';
+'r' : 'p';
+'t' : 'g';
+'y' : 'j';
+'u' : 'l';
+'i' : 'u';
+'o' : 'y';
+'p' : ';';
+
+# Middle Row
+'s' : 'r';
+'d' : 's';
+'f' : 't';
+'g' : 'd';
+'j' : 'n';
+'k' : 'e';
+'l' : 'i';
+';' : 'o';
+
+# Bottom Row
+'n' : 'k';

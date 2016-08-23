@@ -1,0 +1,81 @@
+Name = "MD1.1";
+Layout = "Standard";
+Base = "StandardBlank";
+Version = "0.2";
+Author = "HaaTa (Jacob Alexander) 2014";
+KLL = "0.3";
+Date = "2014-09-14";
+Generator = "KIICONF 0.2";
+
+# ROW1
+U"1" : U"F1";
+U"2" : U"F2";
+U"3" : U"F3";
+U"4" : U"F4";
+U"5" : U"F5";
+U"6" : U"F6";
+U"7" : U"F7";
+U"8" : U"F8";
+U"9" : U"F9";
+U"0" : U"F10";
+U"MINUS" : U"F11";
+U"EQUAL" : U"F12";
+U"BACKSLASH" : None;
+U"BACKTICK" : None;
+
+# ROW2
+U"TAB" : None;
+U"Q" : None;
+U"W" : None;
+U"E" : None;
+U"R" : None;
+U"T" : None;
+U"Y" : None;
+U"U" : None;
+U"I" : U"PAGEUP";
+U"O" : None;
+U"P" : U"LSHIFT" + U"INSERT";
+U"LBRACE" : U"UP";
+U"RBRACE" : U"LSHIFT" + U"DELETE";
+U"BACKSPACE" : U"DELETE";
+
+# ROW3
+#U"LCTRL" : None;
+U"A" : None;
+U"S" : None;
+U"D" : None;
+U"F" : None;
+U"G" : None;
+U"H" : None;
+U"J" : None;
+U"K" : U"PAGEDOWN";
+U"L" : None;
+U"SEMICOLON" : U"LEFT";
+U"QUOTE" : U"DOWN";
+U"ENTER" : U"RIGHT";
+
+# ROW4
+#U"LSHIFT" : None;
+U"Z" : None;
+U"X" : None;
+U"C" : None;
+U"V" : None;
+U"B" : None;
+U"N" : None;
+U"M" : None;
+U"COMMA" : None;
+U"PERIOD" : None;
+U"SLASH" : U"HOME";
+U"RSHIFT" : U"END";
+U"FUNCTION1" : None;
+
+# ROW5
+U"FUNCTION2" : None;
+#U"LALT" : None;
+#U"LGUI" : None;
+#U"SPACE" : None;
+U"RGUI" : U"英数/한자";
+#U"RALT" : None;
+#U"FUNCTION3" : None;
+#U"FUNCTION4" : None;
+U"SPACE" :None;

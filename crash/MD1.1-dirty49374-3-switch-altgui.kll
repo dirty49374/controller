@@ -1,0 +1,16 @@
+Name = "MD1.1";
+Layout = "Standard";
+Base = "StandardBlank";
+Version = "0.2";
+Author = "HaaTa (Jacob Alexander) 2014";
+KLL = "0.3";
+Date = "2014-09-14";
+Generator = "KIICONF 0.2";
+
+
+# ROW5
+U"LALT" : U"LALT";
+U"LGUI" : U"LGUI";
+U"RGUI" : U"RGUI";
+U"RALT" : U"RALT";
+

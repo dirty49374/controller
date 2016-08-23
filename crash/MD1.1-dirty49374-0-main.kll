@@ -1,0 +1,82 @@
+Name = "MD1.1";
+Layout = "Standard";
+Base = "StandardBlank";
+Version = "0.2";
+Author = "HaaTa (Jacob Alexander) 2014";
+KLL = "0.3";
+Date = "2014-09-14";
+Generator = "KIICONF 0.2";
+
+# ROW1
+U"ESC" : U"ESC" + ledPress(0,1);
+U"1" : U"1" + ledPress(0,2);
+U"2" : U"2" + ledPress(0,3);
+U"3" : U"3" + ledPress(0,4);
+U"4" : U"4" + ledPress(0,5);
+U"5" : U"5" + ledPress(0,6);
+U"6" : U"6" + ledPress(0,7);
+U"7" : U"7" + ledPress(0,8);
+U"8" : U"8" + ledPress(0,9);
+U"9" : U"9" + ledPress(0,10);
+U"0" : U"0" + ledPress(0,11);
+U"MINUS" : U"MINUS" + ledPress(0,12);
+U"EQUAL" : U"EQUAL" + ledPress(0,13);
+U"BACKSLASH" : U"BACKSLASH" + ledPress(0,14);
+U"BACKTICK" : U"BACKTICK" + ledPress(0,15);
+
+# ROW2
+U"TAB" : U"TAB" + ledPress(1,1);
+U"Q" : U"Q" + ledPress(1,2);
+U"W" : U"W" + ledPress(1,3);
+U"E" : U"E" + ledPress(1,4);
+U"R" : U"R" + ledPress(1,5);
+U"T" : U"T" + ledPress(1,6);
+U"Y" : U"Y" + ledPress(1,7);
+U"U" : U"U" + ledPress(1,8);
+U"I" : U"I" + ledPress(1,9);
+U"O" : U"O" + ledPress(1,10);
+U"P" : U"P" + ledPress(1,11);
+U"LBRACE" : U"LBRACE" + ledPress(1,12);
+U"RBRACE" : U"RBRACE" + ledPress(1,13);
+U"BACKSPACE" : U"BACKSPACE" + ledPress(1,14);
+
+# ROW3
+U"CTRL" : U"LCTRL" + ledPress(2,1);
+U"A" : U"A" + ledPress(2,2);
+U"S" : U"S" + ledPress(2,3);
+U"D" : U"D" + ledPress(2,4);
+U"F" : U"F" + ledPress(2,5);
+U"G" : U"G" + ledPress(2,6);
+U"H" : U"H" + ledPress(2,7);
+U"J" : U"J" + ledPress(2,8);
+U"K" : U"K" + ledPress(2,9);
+U"L" : U"L" + ledPress(2,10);
+U"SEMICOLON" : U"SEMICOLON" + ledPress(2,11);
+U"QUOTE" : U"QUOTE" + ledPress(2,12);
+U"ENTER" : U"ENTER" + ledPress(2,13);
+
+# ROW4
+U"LSHIFT" : U"LSHIFT" + ledPress(3,1);
+U"Z" : U"Z" + ledPress(3,2);
+U"X" : U"X" + ledPress(3,3);
+U"C" : U"C" + ledPress(3,4);
+U"V" : U"V" + ledPress(3,5);
+U"B" : U"B" + ledPress(3,6);
+U"N" : U"N" + ledPress(3,7);
+U"M" : U"M" + ledPress(3,8);
+U"COMMA" : U"COMMA" + ledPress(3,9);
+U"PERIOD" : U"PERIOD" + ledPress(3,10);
+U"SLASH" : U"SLASH" + ledPress(3,11);
+U"RSHIFT" : U"RSHIFT" + ledPress(3,12);
+U"FUNCTION1" : layerShift(2) + ledGuide(0xfb3f, 0x5c00, 0x5c00, 0x1800, 0x0000);
+
+# ROW5
+U"FUNCTION2" : U"LCTRL" + ledPress(4,0); #layerShift(2) + ledGuide(0xfb3f, 0x5c00, 0x5c00, 0x1800, 0x0000);
+U"LALT" : U"LGUI" + ledPress(4,1);
+U"LGUI" : U"LALT" + ledPress(4,2);
+U"SPACE" : U"SPACE";
+#U"SPACE" : layerShift(5) + pressOnUniqueRelease(0x2C, 200);
+U"RGUI" : U"한/영";
+U"RALT" : layerShift(2) + ledGuide(0xfb3f, 0x5c00, 0x5c00, 0x1800, 0x0000);
+U"FUNCTION3" : layerShift(6) + ledGuide(0x013e, 0x0010, 0xf038, 0x003c, 0x0000);
+U"FUNCTION4" : layerShift(7) + ledGuide(0x003e, 0x0000, 0x0000, 0x0000, 0x0000);
