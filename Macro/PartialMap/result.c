@@ -79,6 +79,7 @@ uint8_t		  RecordingStopped;
 extern void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args );
 extern void Output_recordingControl_capability( uint8_t state, uint8_t stateType, uint8_t *args );
 extern void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args );
+extern void Macro_layerShift_capability( uint8_t state, uint8_t stateType, uint8_t *args );
 
 // -- recording control end
 
@@ -222,6 +223,30 @@ void Result_process()
 	macroResultMacroPendingListSize = macroResultMacroPendingListTail;
 }
 
+typedef struct
+{
+	uint8_t state;
+	uint8_t keycode;
+	uint8_t keycode_flushed;
+	uint8_t layer_shifted;
+	uint32_t press_tick;
+} space_fn_t;
+
+static space_fn_t sfn_data;
+void sfn_flush()
+{
+	if ( sfn_data.keycode != 0 )
+	{
+		print("sfn:do:flush"); printHex(sfn_data.keycode); print(NL);
+
+		Output_usbCodeSend_capability( 0x01, 0, &sfn_data.keycode );
+		Output_send();
+
+		sfn_data.keycode = 0;
+		sfn_data.keycode_flushed = 1;
+	}
+}
+
 static uint8_t press_seq;
 void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
@@ -260,6 +285,7 @@ void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, u
 	}
 	if ( stateType == 0x00 && state == 0x01 )
 		press_seq ++;
+	sfn_flush();
 
 	Output_usbCodeSend_capability( state, stateType, &key );
 }
@@ -399,6 +425,85 @@ void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, u
 					RecordableMacroRecordList[ 0 ].state = 0x01;
 					RecordableMacroRecordList[ 0 ].stateType = 0;
 				}
+			}
+		}
+	}
+}
+
+void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+	// Display capability name
+	if ( stateType == 0xFF && state == 0xFF )
+	{
+		print("Output_spaceFn_capability(delay:2, layer:2, key_code:1)");
+		return;
+	}
+
+	uint16_t delay = *(uint16_t*)&args[0];
+	uint16_t layer = *(uint16_t*)&args[2];
+	uint8_t keycode = args[4];
+
+	if ( stateType == 0x00 )
+	{
+		// press
+		if (state == 0x01)
+		{
+			sfn_data.press_tick = systick_millis_count;
+
+			// if key was pressed or released, send this keycode before
+			sfn_data.state = 0;
+			sfn_data.keycode = keycode;
+			sfn_data.keycode_flushed = 0;
+			sfn_data.layer_shifted = 0;
+
+			print("sfn:start"); print(NL);
+			return;
+		}
+		else if (state == 0x02)
+		{
+			// hold
+			if (sfn_data.state == 0 && systick_millis_count - sfn_data.press_tick >= delay)
+			{
+				if (sfn_data.keycode_flushed)
+				{
+					// space was fired
+					// do not shift layer
+					print("sfn:delay1:space"); print(NL);
+				}
+				else
+				{
+					// space was not fired
+					// do shift layer
+
+					sfn_data.keycode = 0;		// deactivate stacked space 
+					sfn_data.layer_shifted = 1;	// enable layer shift
+
+					// key code was not flushed, this is layer shift
+					Macro_layerShift_capability(0x01, 0, (uint8_t*)&layer);
+					print("sfn:delay1:shift:"); printHex(layer);print(NL);
+				}
+				sfn_data.state = 1;
+			}
+		}
+		else if (state == 0x03)
+		{
+			if (sfn_data.layer_shifted)
+			{
+				// restore if layer was shifted
+				Macro_layerShift_capability(0x03, 0, (uint8_t*)&layer);
+				sfn_data.layer_shifted = 0;
+				print("sfn:release:unshift:");printHex(layer); print(NL);
+			}
+			if (sfn_data.keycode != 0)
+			{
+				// key code was stacked(release within delay), flush it
+				sfn_flush();
+				print("sfn:release:flush"); print(NL);
+			}
+			if(sfn_data.keycode_flushed)
+			{
+				print("sfn:release:space"); print(NL);
+				Output_usbCodeSend_capability(0x03, 0, (uint8_t*)&keycode);
 			}
 		}
 	}
