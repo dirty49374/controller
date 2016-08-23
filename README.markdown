@@ -17,8 +17,8 @@ Some of my ideas
 * storing intermediate data of running macro instance
 * It's better to have some kind of bi-directional usb protocol to exchange information of current status.
   * for example, keyboard can change layer automatically if OS or active windows changed on PC.
-
-
+* support conditional evaluation of key press
+  * sometimes, it is easy to implement send keystroke and evalute just before next key press/release or timeout.
 
 The Kiibohd Controller
 ======================
