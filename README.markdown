@@ -5,6 +5,21 @@ Dirty49374's fork of Kiibohd Controller
 * added led animation, videos available on [youtube](https://www.youtube.com/watch?v=oWXFSwU79Tk)
 * corresponding kll files are [here](https://github.com/dirty49374/kiibohd-dev-vagrant)
 
+Some of my ideas
+================
+* It would be nice to support boolean capability function to extend triggers.
+  * Condition_inputAbsent_capability( ms: 2 ) ==> returns true if there was no input within givin milliseconds.
+* support concrete API for input/output and API daisy chaining with intercepting mechanism.
+  * orig_usbCodeSend = intercept(usbCodeSend, myUsbCodeSend);
+  * void myUsbCodeSend(...) { if (...) { return my_return; } else { return *orig_usbCodeSend(...); } }
+* for led animation, both direct led access API and 2d screen API have to be supported.
+  * set_pixel(scan_code, 255) or set_screen_rect(10, 10, 20, 20, 255)
+* storing intermediate data of running macro instance
+* It's better to have some kind of bi-directional usb protocol to exchange information of current status.
+  * for example, keyboard can change layer automatically if OS or active windows changed on PC.
+* support conditional evaluation of key press
+  * sometimes, it is easy to implement send keystroke and evalute just before next key press/release or timeout.
+
 The Kiibohd Controller
 ======================
 
