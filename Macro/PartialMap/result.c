@@ -450,13 +450,14 @@ void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args 
         // Display capability name
         if ( stateType == 0xFF && state == 0xFF )
         {
-                print("Output_spaceFn_capability(delay:2, layer:2, key_code:1)");
+                print("Output_spaceFn_capability(delay1:2, delay2:2, layer:2, key_code:1)");
                 return;
         }
 
-        uint16_t delay = *(uint16_t*)&args[0];
-        uint16_t layer = *(uint16_t*)&args[2];
-        uint8_t keycode = args[4];
+        uint16_t delay1 = *(uint16_t*)&args[0];
+        uint16_t delay2 = *(uint16_t*)&args[2];
+        uint16_t layer = *(uint16_t*)&args[4];
+        uint8_t keycode = args[6];
 
         if ( stateType == 0x00 )
         {
@@ -480,7 +481,7 @@ void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args 
                 else if (state == 0x02)
                 {
                         // hold
-                        if (sfn_data.state == 0 && systick_millis_count - sfn_data.press_tick >= delay)
+                        if (sfn_data.state == 0 && systick_millis_count - sfn_data.press_tick >= delay1)
                         {
                                 if (sfn_data.keycode_flushed)
                                 {
@@ -521,7 +522,7 @@ void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args 
                         }
                         if (sfn_data.keycode != 0)
                         {
-                                // key code was stacked(release within delay), flush it
+                                // key code was stacked(release within delay1), flush it
                                 sfn_flush(0);
 #if defined(DEBUG_SPACEFN)
                                 print("sfn:release:flush"); print(NL);
@@ -534,9 +535,9 @@ void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args 
 #endif
                                 Output_usbCodeSend_capability(0x03, 0, (uint8_t*)&keycode);
                         }
-                        else if (systick_millis_count - sfn_data.press_tick < 300)
+                        else if (systick_millis_count - sfn_data.press_tick < delay2)
                         {
-                                // elapsed delay, still not elapsed 200ms and no key was pressed
+                                // elapsed delay1, still not elapsed 200ms and no key was pressed
                                 // then send spece
                                 if (sfn_data.press_seq == press_seq)
                                 {

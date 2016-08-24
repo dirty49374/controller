@@ -132,5 +132,4 @@ ISSILedBrightness1 = "
 recordingControl => Output_recordingControl_capability( cmd : 1, slot : 1 );
 usbKeyOut => Output_recordingUsbCodeSend_capability( scan: 1 );
 pressOnUniqueRelease => Output_pressOnUniqueRelease_capability( keycode: 1, within_ms: 2 );
-spaceFn => Output_spaceFn_capability( delay: 2, layer: 2, keycode: 1 );
-
+spaceFn => Output_spaceFn_capability( delay: 2, delay2: 2, layer: 2, keycode: 1 );
