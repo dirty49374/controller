@@ -225,25 +225,36 @@ void Result_process()
 
 typedef struct
 {
-	uint8_t state;
-	uint8_t keycode;
-	uint8_t keycode_flushed;
-	uint8_t layer_shifted;
-	uint32_t press_tick;
+        uint32_t press_tick;
+        uint8_t state;
+        uint8_t keycode;
+        uint8_t keycode_flushed;
+        uint8_t layer_shifted;
+        uint8_t press_seq;
 } space_fn_t;
 
 static space_fn_t sfn_data;
-void sfn_flush()
+void sfn_flush(uint8_t cur_keycode)
 {
 	if ( sfn_data.keycode != 0 )
 	{
+#if defined(DEBUG_SPACEFN)
 		print("sfn:do:flush"); printHex(sfn_data.keycode); print(NL);
+#endif
 
-		Output_usbCodeSend_capability( 0x01, 0, &sfn_data.keycode );
-		Output_send();
+		if ( (cur_keycode & 0xE0) == 0xE0 ) // is modifier key
+		{
+			// just ignore stacked space key
+			sfn_data.keycode = 0;
+		}
+		else
+		{
+			Output_usbCodeSend_capability( 0x01, 0, &sfn_data.keycode );
+			Output_send();
 
-		sfn_data.keycode = 0;
-		sfn_data.keycode_flushed = 1;
+			sfn_data.keycode = 0;
+			sfn_data.keycode_flushed = 1;
+		}
 	}
 }
 
@@ -253,7 +264,9 @@ void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, u
 	// Display capability name
 	if ( stateType == 0xFF && state == 0xFF )
 	{
+#if defined(DEBUG_SPACEFN)
 		print("Output_recordingUsbCodeSend_capability(usbCode)");
+#endif
 		return;
 	}
 
@@ -283,9 +296,11 @@ void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, u
 			}
 		}
 	}
-	if ( stateType == 0x00 && state == 0x01 )
-		press_seq ++;
-	sfn_flush();
+        if ( stateType == 0x00 && (state == 0x01 || state == 0x03))
+        {
+                press_seq ++;
+                sfn_flush(key); // flush space key if current key is not modifier
+        }
 
 	Output_usbCodeSend_capability( state, stateType, &key );
 }
@@ -432,79 +447,104 @@ void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, u
 
 void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
-	// Display capability name
-	if ( stateType == 0xFF && state == 0xFF )
-	{
-		print("Output_spaceFn_capability(delay:2, layer:2, key_code:1)");
-		return;
-	}
+        // Display capability name
+        if ( stateType == 0xFF && state == 0xFF )
+        {
+                print("Output_spaceFn_capability(delay:2, layer:2, key_code:1)");
+                return;
+        }
 
-	uint16_t delay = *(uint16_t*)&args[0];
-	uint16_t layer = *(uint16_t*)&args[2];
-	uint8_t keycode = args[4];
+        uint16_t delay = *(uint16_t*)&args[0];
+        uint16_t layer = *(uint16_t*)&args[2];
+        uint8_t keycode = args[4];
 
-	if ( stateType == 0x00 )
-	{
-		// press
-		if (state == 0x01)
-		{
-			sfn_data.press_tick = systick_millis_count;
+        if ( stateType == 0x00 )
+        {
+                // press
+                if (state == 0x01)
+                {
+                        sfn_data.press_tick = systick_millis_count;
 
-			// if key was pressed or released, send this keycode before
-			sfn_data.state = 0;
-			sfn_data.keycode = keycode;
-			sfn_data.keycode_flushed = 0;
-			sfn_data.layer_shifted = 0;
+                        // if key was pressed or released, send this keycode before
+                        sfn_data.state = 0;
+                        sfn_data.press_seq = press_seq;
+                        sfn_data.keycode = keycode;
+                        sfn_data.keycode_flushed = 0;
+                        sfn_data.layer_shifted = 0;
 
-			print("sfn:start"); print(NL);
-			return;
-		}
-		else if (state == 0x02)
-		{
-			// hold
-			if (sfn_data.state == 0 && systick_millis_count - sfn_data.press_tick >= delay)
-			{
-				if (sfn_data.keycode_flushed)
-				{
-					// space was fired
-					// do not shift layer
-					print("sfn:delay1:space"); print(NL);
-				}
-				else
-				{
-					// space was not fired
-					// do shift layer
+#if defined(DEBUG_SPACEFN)
+                        print("sfn:start"); print(NL);
+#endif
+                        return;
+                }
+                else if (state == 0x02)
+                {
+                        // hold
+                        if (sfn_data.state == 0 && systick_millis_count - sfn_data.press_tick >= delay)
+                        {
+                                if (sfn_data.keycode_flushed)
+                                {
+                                        // space was fired
+                                        // do not shift layer
+#if defined(DEBUG_SPACEFN)
+                                        print("sfn:delay1:space"); print(NL);
+#endif
+                                }
+                                else
+                                {
+                                        // space was not fired
+                                        // do shift layer
 
-					sfn_data.keycode = 0;		// deactivate stacked space 
-					sfn_data.layer_shifted = 1;	// enable layer shift
+                                        sfn_data.keycode = 0;           // deactivate stacked space
+                                        sfn_data.layer_shifted = 1;     // enable layer shift
 
-					// key code was not flushed, this is layer shift
-					Macro_layerShift_capability(0x01, 0, (uint8_t*)&layer);
-					print("sfn:delay1:shift:"); printHex(layer);print(NL);
-				}
-				sfn_data.state = 1;
-			}
-		}
+                                        // key code was not flushed, this is layer shift
+                                        Macro_layerShift_capability(0x01, 0, (uint8_t*)&layer);
+
+#if defined(DEBUG_SPACEFN)
+                                        print("sfn:delay1:shift:"); printHex(layer);print(NL);
+#endif
+                                }
+                                sfn_data.state = 1;
+                        }
+                }
 		else if (state == 0x03)
 		{
-			if (sfn_data.layer_shifted)
-			{
-				// restore if layer was shifted
-				Macro_layerShift_capability(0x03, 0, (uint8_t*)&layer);
-				sfn_data.layer_shifted = 0;
-				print("sfn:release:unshift:");printHex(layer); print(NL);
-			}
-			if (sfn_data.keycode != 0)
-			{
-				// key code was stacked(release within delay), flush it
-				sfn_flush();
-				print("sfn:release:flush"); print(NL);
-			}
-			if(sfn_data.keycode_flushed)
-			{
-				print("sfn:release:space"); print(NL);
-				Output_usbCodeSend_capability(0x03, 0, (uint8_t*)&keycode);
-			}
+                        if (sfn_data.layer_shifted)
+                        {
+                                // restore if layer was shifted
+                                Macro_layerShift_capability(0x03, 0, (uint8_t*)&layer);
+                                sfn_data.layer_shifted = 0;
+#if defined(DEBUG_SPACEFN)
+                                print("sfn:release:unshift:");printHex(layer); print(NL);
+#endif
+                        }
+                        if (sfn_data.keycode != 0)
+                        {
+                                // key code was stacked(release within delay), flush it
+                                sfn_flush(0);
+#if defined(DEBUG_SPACEFN)
+                                print("sfn:release:flush"); print(NL);
+#endif
+                        }
+                        if (sfn_data.keycode_flushed)
+                        {
+#if defined(DEBUG_SPACEFN)
+                                print("sfn:release:space"); print(NL);
+#endif
+                                Output_usbCodeSend_capability(0x03, 0, (uint8_t*)&keycode);
+                        }
+                        else if (systick_millis_count - sfn_data.press_tick < 300)
+                        {
+                                // elapsed delay, still not elapsed 200ms and no key was pressed
+                                // then send spece
+                                if (sfn_data.press_seq == press_seq)
+                                {
+                                        Output_usbCodeSend_capability(0x01, 0, (uint8_t*)&keycode);
+                                        Output_send();
+                                        Output_usbCodeSend_capability(0x03, 0, (uint8_t*)&keycode);
+                                }
+                        }
 		}
 	}
 }
