@@ -296,7 +296,7 @@ void Output_recordingUsbCodeSend_capability( uint8_t state, uint8_t stateType, u
 			}
 		}
 	}
-        if ( stateType == 0x00 && (state == 0x01 || state == 0x03))
+        if ( stateType == 0x00 && state == 0x01)
         {
                 press_seq ++;
                 sfn_flush(key); // flush space key if current key is not modifier
