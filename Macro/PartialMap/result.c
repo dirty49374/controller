@@ -231,6 +231,7 @@ typedef struct
         uint8_t keycode_flushed;
         uint8_t layer_shifted;
         uint8_t press_seq;
+        uint8_t disabled;
 } space_fn_t;
 
 static space_fn_t sfn_data;
@@ -445,6 +446,24 @@ void Output_pressOnUniqueRelease_capability( uint8_t state, uint8_t stateType, u
 	}
 }
 
+void Output_toggleSpaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args )
+{
+        // Display capability name
+        if ( stateType == 0xFF && state == 0xFF )
+        {
+                print("Output_toggleSpaceFn_capability(delay1:2, delay2:2, layer:2, key_code:1)");
+                return;
+        }
+
+	if ( stateType == 0x00 && state == 0x01 )
+	{
+		sfn_data.disabled = !sfn_data.disabled;
+#if defined(DEBUG_SPACEFN)
+		print("sfn:toggle"); printHex(sfn_data.disabled); print(NL);
+#endif
+	}
+}
+
 void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args )
 {
         // Display capability name
@@ -458,6 +477,15 @@ void Output_spaceFn_capability( uint8_t state, uint8_t stateType, uint8_t *args 
         uint16_t delay2 = *(uint16_t*)&args[2];
         uint16_t layer = *(uint16_t*)&args[4];
         uint8_t keycode = args[6];
+
+	if (sfn_data.disabled)
+	{
+#if defined(DEBUG_SPACEFN)
+                print("sfn:disabled"); print(NL);
+#endif
+        	Output_usbCodeSend_capability(state, stateType, (uint8_t*)&keycode);
+		return;
+	}
 
         if ( stateType == 0x00 )
         {
